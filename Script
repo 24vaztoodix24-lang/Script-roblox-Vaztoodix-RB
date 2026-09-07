@@ -1,10 +1,11 @@
 -- Script Roblox pour Delta Executor / Solara v3
--- Spawn de 2 armes 1-hit avec interface graphique
+-- Spawn de 2 armes 1-hit + téléportation + effets visuels (épées orbitales)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 -- Configuration
 local ARMES = {
@@ -12,6 +13,9 @@ local ARMES = {
     {Nom = "Micha Minivichi", Portee = 600}
 }
 local GUI_ACTIVE = true
+local TELEPORT_ACTIVE = true
+local SWORDS_ACTIVE = true
+local swords = {} -- pour stocker les épées
 
 -- Fonction de changement de nom
 local function ChangerNom()
@@ -40,6 +44,12 @@ local function CreerArme(nomArme, portee)
                     local distance = (char.HumanoidRootPart.Position - targetPos).Magnitude
                     if distance <= portee then
                         humanoid.Health = 0
+                        -- Effet d'explosion sur le joueur tué
+                        local explosion = Instance.new("Explosion")
+                        explosion.Position = char.HumanoidRootPart.Position
+                        explosion.BlastRadius = 10
+                        explosion.BlastPressure = 0
+                        explosion.Parent = workspace
                         ChangerNom()
                     end
                 end
@@ -58,15 +68,89 @@ local function CreerToutesArmes()
     end
 end
 
--- Interface graphique
+-- Téléportation vers la souris
+local function Teleporter()
+    if not TELEPORT_ACTIVE then return end
+    local mouse = LocalPlayer:GetMouse()
+    if not mouse then return end
+    local targetPos = mouse.Hit.Position
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("HumanoidRootPart") then
+        char:SetPrimaryPartCFrame(CFrame.new(targetPos))
+    end
+end
+
+-- Création des épées orbitales
+local function CreerSwords()
+    if not SWORDS_ACTIVE then return end
+    -- Supprimer les anciennes
+    for _, sword in pairs(swords) do
+        sword:Destroy()
+    end
+    swords = {}
+
+    local char = LocalPlayer.Character
+    if not char then return end
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    for i = 1, 6 do
+        local sword = Instance.new("Part")
+        sword.Size = Vector3.new(0.2, 1, 0.2)
+        sword.BrickColor = BrickColor.new("Bright red")
+        sword.Material = Enum.Material.Neon
+        sword.Anchored = false
+        sword.CanCollide = false
+        sword.Parent = workspace
+
+        -- Attacher au personnage avec un Weld
+        local weld = Instance.new("Weld")
+        weld.Part0 = root
+        weld.Part1 = sword
+        weld.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, math.rad(i * 60), 0) * CFrame.new(3, 0, 0)
+        weld.Parent = sword
+
+        -- Ajouter un effet de trail
+        local trail = Instance.new("Trail")
+        trail.Parent = sword
+        trail.Lifetime = 0.5
+        trail.MinLength = 1
+        trail.MaxLength = 5
+        trail.Color = Color3.new(1, 0, 0)
+        trail.Transparency = NumberSequence.new(0, 1)
+
+        table.insert(swords, sword)
+    end
+end
+
+-- Mise à jour de la rotation des épées (effet orbital)
+RunService.Heartbeat:Connect(function()
+    if SWORDS_ACTIVE and LocalPlayer.Character then
+        local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if root then
+            local angle = 0
+            for _, sword in pairs(swords) do
+                if sword and sword.Parent then
+                    local weld = sword:FindFirstChild("Weld")
+                    if weld then
+                        angle = angle + 0.02
+                        weld.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, angle, 0) * CFrame.new(3, 0, 0)
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Interface graphique améliorée
 local function CreerInterface()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Name = "VaztoodixGUI"
     screenGui.Parent = LocalPlayer.PlayerGui
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 350, 0, 250)
-    frame.Position = UDim2.new(0.5, -175, 0.5, -125)
+    frame.Size = UDim2.new(0, 400, 0, 350)
+    frame.Position = UDim2.new(0.5, -200, 0.5, -175)
     frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
     frame.BackgroundTransparency = 0.15
     frame.BorderSizePixel = 0
@@ -79,7 +163,7 @@ local function CreerInterface()
     title.Position = UDim2.new(0, 0, 0, 0)
     title.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
     title.BackgroundTransparency = 0.3
-    title.Text = "Vaztoodix ™ - Double Arme"
+    title.Text = "Vaztoodix ™ - Hack Ultimate"
     title.TextColor3 = Color3.fromRGB(255, 255, 255)
     title.TextSize = 18
     title.Font = Enum.Font.GothamBold
@@ -115,10 +199,26 @@ local function CreerInterface()
         yOffset = yOffset + 0.22
     end
 
+    -- Bouton Téléportation
+    local teleBtn = Instance.new("TextButton")
+    teleBtn.Size = UDim2.new(0, 120, 0, 35)
+    teleBtn.Position = UDim2.new(0.08, 0, 0.78, 0)
+    teleBtn.BackgroundColor3 = Color3.fromRGB(40, 100, 200)
+    teleBtn.Text = "TELÉPORT [ON]"
+    teleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    teleBtn.TextSize = 14
+    teleBtn.Font = Enum.Font.GothamBold
+    teleBtn.Parent = frame
+    teleBtn.MouseButton1Click:Connect(function()
+        TELEPORT_ACTIVE = not TELEPORT_ACTIVE
+        teleBtn.Text = "TÉLÉPORT " .. (TELEPORT_ACTIVE and "[ON]" or "[OFF]")
+        teleBtn.BackgroundColor3 = TELEPORT_ACTIVE and Color3.fromRGB(40, 100, 200) or Color3.fromRGB(100, 100, 100)
+    end)
+
     -- Bouton Kill All
     local killBtn = Instance.new("TextButton")
     killBtn.Size = UDim2.new(0, 120, 0, 35)
-    killBtn.Position = UDim2.new(0.33, 0, 0.78, 0)
+    killBtn.Position = UDim2.new(0.52, 0, 0.78, 0)
     killBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
     killBtn.Text = "TUER TOUS"
     killBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -129,10 +229,41 @@ local function CreerInterface()
         for _, player in pairs(Players:GetPlayers()) do
             if player ~= LocalPlayer and player.Character then
                 local humanoid = player.Character:FindFirstChild("Humanoid")
-                if humanoid then humanoid.Health = 0 end
+                if humanoid then
+                    humanoid.Health = 0
+                    local explosion = Instance.new("Explosion")
+                    explosion.Position = player.Character.HumanoidRootPart.Position
+                    explosion.BlastRadius = 10
+                    explosion.BlastPressure = 0
+                    explosion.Parent = workspace
+                end
             end
         end
         ChangerNom()
+    end)
+
+    -- Bouton Épées orbitales
+    local swordBtn = Instance.new("TextButton")
+    swordBtn.Size = UDim2.new(0, 140, 0, 35)
+    swordBtn.Position = UDim2.new(0.33, 0, 0.9, 0)
+    swordBtn.BackgroundColor3 = Color3.fromRGB(200, 150, 0)
+    swordBtn.Text = "ÉPÉES [ON]"
+    swordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    swordBtn.TextSize = 14
+    swordBtn.Font = Enum.Font.GothamBold
+    swordBtn.Parent = frame
+    swordBtn.MouseButton1Click:Connect(function()
+        SWORDS_ACTIVE = not SWORDS_ACTIVE
+        swordBtn.Text = "ÉPÉES " .. (SWORDS_ACTIVE and "[ON]" or "[OFF]")
+        swordBtn.BackgroundColor3 = SWORDS_ACTIVE and Color3.fromRGB(200, 150, 0) or Color3.fromRGB(100, 100, 100)
+        if SWORDS_ACTIVE then
+            CreerSwords()
+        else
+            for _, sword in pairs(swords) do
+                sword:Destroy()
+            end
+            swords = {}
+        end
     end)
 
     local closeBtn = Instance.new("TextButton")
@@ -149,10 +280,14 @@ local function CreerInterface()
         GUI_ACTIVE = false
     end)
 
+    -- Raccourci clavier : T pour téléporter, E pour épées ?
     UserInputService.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == Enum.KeyCode.Escape then
+        if processed then return end
+        if input.KeyCode == Enum.KeyCode.Escape then
             screenGui:Destroy()
             GUI_ACTIVE = false
+        elseif input.KeyCode == Enum.KeyCode.T then
+            Teleporter()
         end
     end)
 
@@ -168,6 +303,10 @@ RunService.Heartbeat:Connect(function()
             end
         end
     end
+    -- Mise à jour des épées si actives
+    if SWORDS_ACTIVE and #swords == 0 and LocalPlayer.Character then
+        CreerSwords()
+    end
 end)
 
 -- Changement de nom périodique
@@ -182,5 +321,6 @@ end)
 -- Initialisation
 CreerToutesArmes()
 CreerInterface()
-print("Script charge - 2 armes pretes | GUI active")
-print("Armes: zizi Tranchant (500 studs) | Micha Minivichi (600 studs)")
+CreerSwords()
+print("Script charge - 2 armes, teleport, epées orbitales | GUI active")
+print("Touche T pour te téléporter à la souris")
