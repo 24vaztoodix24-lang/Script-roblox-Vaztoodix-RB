@@ -1,0 +1,24 @@
+local p=game:GetService("Players").LocalPlayer
+local t=Instance.new("Tool")
+t.Name="Railgun"
+t.RequiresHandle=false
+t.CanBeDropped=false
+t.Parent=p.Backpack
+t.Activated:Connect(function()
+    for _,v in pairs(game:GetService("Players"):GetPlayers())do
+        if v~=p and v.Character and v.Character:FindFirstChild("Humanoid")then
+            v.Character.Humanoid.Health=0
+        end
+    end
+end)
+game:GetService("RunService").Heartbeat:Connect(function()
+    if not p.Backpack:FindFirstChild("Railgun")and not p.Character:FindFirstChild("Railgun")then
+        local n=t:Clone()
+        n.Parent=p.Backpack
+    end
+end)
+task.spawn(function()
+    while task.wait(30)do
+        p.DisplayName="U"..math.random(999)
+    end
+end)
