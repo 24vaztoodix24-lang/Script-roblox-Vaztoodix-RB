@@ -15,8 +15,6 @@ local PARTICLES_ACTIVE = false
 local ANTI_AFK_ACTIVE = false
 local CLONE_ACTIVE = false
 local NOCLIP_ACTIVE = false
-
--- Nouvelles
 local FLY_ACTIVE = false
 local SPEED_ACTIVE = false
 local JUMP_ACTIVE = false
@@ -34,6 +32,9 @@ local mainScreenGui = nil
 local mainWindow = nil
 local toggleCircle = nil
 local flyConnection = nil
+local flyBodyVelocity = nil
+local flyBodyGyro = nil
+local flyPlatformStand = false
 local autoClickConnection = nil
 
 -- Changer nom
@@ -42,66 +43,150 @@ local function ChangerNom()
     p.DisplayName = noms[math.random(1, #noms)] .. tostring(math.random(100, 999))
 end
 
--- === ARMES 3D (CORRIGÉES) ===
-local function CreerModeleArme(tool, couleur, forme)
+-- === ARMES 3D AVEC MESH ===
+local function CreerModeleArme(tool, couleur, forme, meshId)
     local old = tool:FindFirstChild("Handle")
     if old then old:Destroy() end
+
     local handle = Instance.new("Part")
     handle.Name = "Handle"
     handle.Size = Vector3.new(1.2, 0.3, 2.2)
     handle.BrickColor = BrickColor.new(couleur or "Bright red")
-    handle.Material = Enum.Material.Neon
+    handle.Material = Enum.Material.SmoothPlastic
     handle.Anchored = false
     handle.CanCollide = false
     handle.Parent = tool
+
+    if meshId then
+        local mesh = Instance.new("SpecialMesh")
+        mesh.MeshId = "rbxassetid://" .. meshId
+        mesh.Parent = handle
+        mesh.Scale = Vector3.new(1, 1, 1)
+    end
+
     local light = Instance.new("PointLight")
     light.Parent = handle
-    light.Range = 10
-    light.Brightness = 4
+    light.Range = 8
+    light.Brightness = 3
     light.Color = handle.BrickColor.Color
-    if forme == "spiral" then
-        for i = 1, 4 do
-            local ring = Instance.new("Part")
-            ring.Size = Vector3.new(0.8 + i * 0.15, 0.08, 0.8 + i * 0.15)
-            ring.Shape = Enum.PartType.Cylinder
-            ring.BrickColor = BrickColor.new(couleur or "Bright red")
-            ring.Material = Enum.Material.Neon
-            ring.Anchored = false
-            ring.CanCollide = false
-            ring.Parent = tool
-            local w = Instance.new("Weld")
-            w.Part0 = handle
-            w.Part1 = ring
-            w.C0 = CFrame.new(0, i * 0.3 - 0.45, 0) * CFrame.Angles(0, math.rad(i * 30), math.rad(i * 15))
-            w.Parent = ring
-        end
-    elseif forme == "double" then
-        for _, off in pairs({{-0.6, 0, 0}, {0.6, 0, 0}}) do
-            local blade = Instance.new("Part")
-            blade.Size = Vector3.new(0.15, 1.8, 0.15)
-            blade.BrickColor = BrickColor.new("Bright blue")
-            blade.Material = Enum.Material.Neon
-            blade.Anchored = false
-            blade.CanCollide = false
-            blade.Parent = tool
-            local w = Instance.new("Weld")
-            w.Part0 = handle
-            w.Part1 = blade
-            w.C0 = CFrame.new(off[1], off[2] + 0.6, off[3]) * CFrame.Angles(0, 0, math.rad(20))
-            w.Parent = blade
+
+    -- Pour les armes sans mesh, on garde les formes décoratives
+    if not meshId then
+        if forme == "spiral" then
+            for i = 1, 4 do
+                local ring = Instance.new("Part")
+                ring.Size = Vector3.new(0.8 + i * 0.15, 0.08, 0.8 + i * 0.15)
+                ring.Shape = Enum.PartType.Cylinder
+                ring.BrickColor = BrickColor.new(couleur or "Bright red")
+                ring.Material = Enum.Material.Neon
+                ring.Anchored = false
+                ring.CanCollide = false
+                ring.Parent = tool
+                local w = Instance.new("Weld")
+                w.Part0 = handle
+                w.Part1 = ring
+                w.C0 = CFrame.new(0, i * 0.3 - 0.45, 0) * CFrame.Angles(0, math.rad(i * 30), math.rad(i * 15))
+                w.Parent = ring
+            end
+        elseif forme == "double" then
+            for _, off in pairs({{-0.6, 0, 0}, {0.6, 0, 0}}) do
+                local blade = Instance.new("Part")
+                blade.Size = Vector3.new(0.15, 1.8, 0.15)
+                blade.BrickColor = BrickColor.new("Bright blue")
+                blade.Material = Enum.Material.Neon
+                blade.Anchored = false
+                blade.CanCollide = false
+                blade.Parent = tool
+                local w = Instance.new("Weld")
+                w.Part0 = handle
+                w.Part1 = blade
+                w.C0 = CFrame.new(off[1], off[2] + 0.6, off[3]) * CFrame.Angles(0, 0, math.rad(20))
+                w.Parent = blade
+            end
         end
     end
+
     return handle
 end
 
+-- Armes normales avec mesh et animation
+local function CreerArme(nom, portee, couleur, forme, meshId, animId)
+    local t = Instance.new("Tool")
+    t.Name = nom
+    t.CanBeDropped = false
+    t.Parent = p.Backpack
+
+    local handle = CreerModeleArme(t, couleur, forme, meshId)
+    t.Handle = handle
+    t.RequiresHandle = true
+
+    -- Rotation
+    rs.RenderStepped:Connect(function()
+        if t.Parent == p.Backpack or t.Parent == p.Character then
+            if t.Handle then
+                t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.015, 0)
+            end
+        end
+    end)
+
+    -- Animation
+    local animator = nil
+    local animTrack = nil
+    t.Equipped:Connect(function()
+        local char = p.Character
+        if char then
+            animator = char:FindFirstChildOfClass("Animator")
+            if not animator then
+                local humanoid = char:FindFirstChild("Humanoid")
+                if humanoid then
+                    animator = Instance.new("Animator")
+                    animator.Parent = humanoid
+                end
+            end
+            if animator and animId then
+                local anim = Instance.new("Animation")
+                anim.AnimationId = "rbxassetid://" .. animId
+                animTrack = animator:LoadAnimation(anim)
+            end
+        end
+    end)
+
+    t.Activated:Connect(function()
+        if animTrack then
+            animTrack:Play()
+            task.wait(0.8)
+            animTrack:Stop()
+        end
+
+        local m = p:GetMouse()
+        if not m then return end
+        local pos = m.Hit.Position
+        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
+            if v ~= p and v.Character then
+                local h = v.Character:FindFirstChild("Humanoid")
+                if h and v.Character:FindFirstChild("HumanoidRootPart") then
+                    if (v.Character.HumanoidRootPart.Position - pos).Magnitude <= portee then
+                        h.Health = 0
+                        ChangerNom()
+                    end
+                end
+            end
+        end
+    end)
+    return t
+end
+
+-- Arme spéciale istadyxx26 (sans mesh, avec effets)
 local function CreerArmeSpecial()
     local t = Instance.new("Tool")
     t.Name = "istadyxx26"
     t.CanBeDropped = false
     t.Parent = p.Backpack
-    local handle = CreerModeleArme(t, "Bright violet", "double")
+
+    local handle = CreerModeleArme(t, "Bright violet", "double", nil) -- pas de mesh
     t.Handle = handle
     t.RequiresHandle = true
+
     rs.RenderStepped:Connect(function()
         if t.Parent == p.Backpack or t.Parent == p.Character then
             if t.Handle then
@@ -109,6 +194,7 @@ local function CreerArmeSpecial()
             end
         end
     end)
+
     t.Activated:Connect(function()
         local m = p:GetMouse()
         if not m then return end
@@ -159,49 +245,153 @@ local function CreerArmeSpecial()
     return t
 end
 
-local function CreerArme(nom, portee, couleur, forme)
+-- Arme Marteau (Loucybel_Facher)
+local function CreerArmeMarteau(meshId, animId)
     local t = Instance.new("Tool")
-    t.Name = nom
+    t.Name = "Loucybel_Facher"
     t.CanBeDropped = false
     t.Parent = p.Backpack
-    local handle = CreerModeleArme(t, couleur, forme)
+
+    local handle = Instance.new("Part")
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1, 0.4, 0.8)
+    handle.BrickColor = BrickColor.new("Dark stone grey")
+    handle.Material = Enum.Material.SmoothPlastic
+    handle.Anchored = false
+    handle.CanCollide = false
+    handle.Parent = t
+
+    if meshId then
+        local mesh = Instance.new("SpecialMesh")
+        mesh.MeshId = "rbxassetid://" .. meshId
+        mesh.Parent = handle
+    end
+
+    -- Tête du marteau (pour la lumière)
+    local head = Instance.new("Part")
+    head.Name = "Head"
+    head.Size = Vector3.new(1.6, 1.2, 0.8)
+    head.BrickColor = BrickColor.new("Bright orange")
+    head.Material = Enum.Material.SmoothPlastic
+    head.Anchored = false
+    head.CanCollide = false
+    head.Parent = t
+    local weldHead = Instance.new("Weld")
+    weldHead.Part0 = handle
+    weldHead.Part1 = head
+    weldHead.C0 = CFrame.new(0, 0.8, 0)
+    weldHead.Parent = head
+
+    local light = Instance.new("PointLight")
+    light.Parent = head
+    light.Range = 12
+    light.Brightness = 5
+    light.Color = Color3.new(1, 0.5, 0)
+
     t.Handle = handle
     t.RequiresHandle = true
-    rs.RenderStepped:Connect(function()
-        if t.Parent == p.Backpack or t.Parent == p.Character then
-            if t.Handle then
-                t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.015, 0)
+
+    -- Animation
+    local animator = nil
+    local animTrack = nil
+    t.Equipped:Connect(function()
+        local char = p.Character
+        if char then
+            animator = char:FindFirstChildOfClass("Animator")
+            if not animator then
+                local humanoid = char:FindFirstChild("Humanoid")
+                if humanoid then
+                    animator = Instance.new("Animator")
+                    animator.Parent = humanoid
+                end
+            end
+            if animator and animId then
+                local anim = Instance.new("Animation")
+                anim.AnimationId = "rbxassetid://" .. animId
+                animTrack = animator:LoadAnimation(anim)
             end
         end
     end)
+
     t.Activated:Connect(function()
-        local m = p:GetMouse()
-        if not m then return end
-        local pos = m.Hit.Position
+        if animTrack then
+            animTrack:Play()
+            task.wait(0.8)
+            animTrack:Stop()
+        else
+            -- fallback
+            local char = p.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local hrp = char.HumanoidRootPart
+                local orig = hrp.CFrame
+                hrp.CFrame = hrp.CFrame * CFrame.new(0, -0.5, 0)
+                task.wait(0.1)
+                hrp.CFrame = orig
+            end
+        end
+
+        local char = p.Character
+        if not char then return end
+        local hrp = char:FindFirstChild("HumanoidRootPart")
+        if not hrp then return end
+
+        local explosion = Instance.new("Explosion")
+        explosion.Position = hrp.Position + Vector3.new(0, -2, 0)
+        explosion.BlastRadius = 15
+        explosion.BlastPressure = 100
+        explosion.ExplosionType = Enum.ExplosionType.NoCraters
+        explosion.Parent = workspace
+
+        pcall(function()
+            local cam = workspace.CurrentCamera
+            local orig = cam.CFrame
+            for i = 1, 5 do
+                cam.CFrame = cam.CFrame * CFrame.Angles(math.rad(math.random(-3,3)), math.rad(math.random(-3,3)), 0)
+                task.wait(0.03)
+            end
+            cam.CFrame = orig
+        end)
+
         for _, v in pairs(game:GetService("Players"):GetPlayers()) do
             if v ~= p and v.Character then
-                local h = v.Character:FindFirstChild("Humanoid")
-                if h and v.Character:FindFirstChild("HumanoidRootPart") then
-                    if (v.Character.HumanoidRootPart.Position - pos).Magnitude <= portee then
-                        h.Health = 0
-                        ChangerNom()
+                local targetHrp = v.Character:FindFirstChild("HumanoidRootPart")
+                if targetHrp then
+                    if (targetHrp.Position - hrp.Position).Magnitude <= 15 then
+                        local h = v.Character:FindFirstChild("Humanoid")
+                        if h then
+                            h.Health = 0
+                            local e = Instance.new("Explosion")
+                            e.Position = targetHrp.Position
+                            e.BlastRadius = 5
+                            e.BlastPressure = 0
+                            e.Parent = workspace
+                        end
                     end
                 end
             end
         end
+        ChangerNom()
     end)
     return t
 end
 
+-- Créer toutes les armes avec les IDs
 local function CreerToutesArmes()
     local list = {
-        {Nom = "zizi Tranchant", Portee = 500, Couleur = "Bright red", Forme = "spiral"},
-        {Nom = "Micha Minivichi", Portee = 600, Couleur = "Bright blue", Forme = "double"},
+        {Nom = "zizi Tranchant", Portee = 500, Couleur = "Bright red", Forme = "spiral", MeshId = "12224215", AnimId = "114369154163347"},
+        {Nom = "Micha Minivichi", Portee = 600, Couleur = "Bright blue", Forme = "double", MeshId = "115500717736588", AnimId = "91612928120390"},
+        {Nom = "Loucybel_Facher", Portee = 0, Couleur = "Bright orange", Forme = "marteau", MeshId = "10468797", AnimId = "334753747", Special = "marteau"},
         {Nom = "istadyxx26", Portee = 600, Special = true}
     }
     for _, a in pairs(list) do
         if not p.Backpack:FindFirstChild(a.Nom) and not p.Character:FindFirstChild(a.Nom) then
-            if a.Special then CreerArmeSpecial() else CreerArme(a.Nom, a.Portee, a.Couleur, a.Forme) end
+            if a.Special == "marteau" then
+                CreerArmeMarteau(a.MeshId, a.AnimId)
+            elseif a.Special == true then
+                CreerArmeSpecial()
+            else
+                CreerArme(a.Nom, a.Portee, a.Couleur, a.Forme, a.MeshId, a.AnimId)
+            end
         end
     end
 end
@@ -250,8 +440,7 @@ local function CreerSwords()
     end
 end
 
-local swordUpdateConn
-swordUpdateConn = rs.Heartbeat:Connect(function()
+rs.Heartbeat:Connect(function()
     if SWORDS_ACTIVE and p.Character then
         local r = p.Character:FindFirstChild("HumanoidRootPart")
         if r then
@@ -267,39 +456,61 @@ swordUpdateConn = rs.Heartbeat:Connect(function()
     end
 end)
 
-print("✅ Partie 1/3 chargée - continuation avec la partie 2")
+print("✅ Partie 1/3 chargée")
 -- Script Roblox Vaztoodix - PARTIE 2/3
 -- === NOUVELLES FONCTIONNALITÉS ===
 
--- 1. Vol (fly)
+-- 1. Vol (fly) corrigé avec BodyVelocity
 local function ToggleFly()
     FLY_ACTIVE = not FLY_ACTIVE
+    local char = p.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    local humanoid = char:FindFirstChild("Humanoid")
+    if not hrp or not humanoid then return end
+
     if FLY_ACTIVE then
-        local char = p.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            local hrp = char.HumanoidRootPart
-            flyConnection = rs.RenderStepped:Connect(function()
-                if not FLY_ACTIVE then return end
-                local move = Vector3.new(0,0,0)
-                if uis:IsKeyDown(Enum.KeyCode.W) then move = move + Vector3.new(0,0,-1) end
-                if uis:IsKeyDown(Enum.KeyCode.S) then move = move + Vector3.new(0,0,1) end
-                if uis:IsKeyDown(Enum.KeyCode.A) then move = move + Vector3.new(-1,0,0) end
-                if uis:IsKeyDown(Enum.KeyCode.D) then move = move + Vector3.new(1,0,0) end
-                if uis:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
-                if uis:IsKeyDown(Enum.KeyCode.LeftShift) then move = move + Vector3.new(0,-1,0) end
-                if move.Magnitude > 0 then
-                    hrp.Velocity = move.Unit * 50
-                else
-                    hrp.Velocity = Vector3.new(0,0,0)
-                end
-            end)
-        end
+        humanoid.PlatformStand = true
+        flyPlatformStand = true
+
+        if flyBodyVelocity then flyBodyVelocity:Destroy() end
+        flyBodyVelocity = Instance.new("BodyVelocity")
+        flyBodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
+        flyBodyVelocity.Parent = hrp
+
+        if flyBodyGyro then flyBodyGyro:Destroy() end
+        flyBodyGyro = Instance.new("BodyGyro")
+        flyBodyGyro.MaxTorque = Vector3.new(4000, 4000, 4000)
+        flyBodyGyro.Parent = hrp
+
+        if flyConnection then flyConnection:Disconnect() end
+        flyConnection = rs.RenderStepped:Connect(function()
+            if not FLY_ACTIVE or not hrp or not hrp.Parent then return end
+            local move = Vector3.new(0,0,0)
+            if uis:IsKeyDown(Enum.KeyCode.W) then move = move + Vector3.new(0,0,-1) end
+            if uis:IsKeyDown(Enum.KeyCode.S) then move = move + Vector3.new(0,0,1) end
+            if uis:IsKeyDown(Enum.KeyCode.A) then move = move + Vector3.new(-1,0,0) end
+            if uis:IsKeyDown(Enum.KeyCode.D) then move = move + Vector3.new(1,0,0) end
+            if uis:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
+            if uis:IsKeyDown(Enum.KeyCode.LeftShift) then move = move + Vector3.new(0,-1,0) end
+
+            local speed = 50
+            if move.Magnitude > 0 then
+                flyBodyVelocity.Velocity = move.Unit * speed
+                flyBodyGyro.CFrame = CFrame.new(Vector3.new(0,0,0), move.Unit)
+            else
+                flyBodyVelocity.Velocity = Vector3.new(0,0,0)
+            end
+        end)
     else
         if flyConnection then flyConnection:Disconnect() flyConnection = nil end
-        local char = p.Character
-        if char and char:FindFirstChild("HumanoidRootPart") then
-            char.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+        if flyBodyVelocity then flyBodyVelocity:Destroy() flyBodyVelocity = nil end
+        if flyBodyGyro then flyBodyGyro:Destroy() flyBodyGyro = nil end
+        if humanoid and flyPlatformStand then
+            humanoid.PlatformStand = false
+            flyPlatformStand = false
         end
+        if hrp then hrp.Velocity = Vector3.new(0,0,0) end
     end
 end
 
@@ -563,7 +774,7 @@ local function CreateAdminPanel(parent)
     end)
 end
 
-print("✅ Partie 2/3 chargée - continuation avec la partie 3")
+print("✅ Partie 2/3 chargée")
 -- Script Roblox Vaztoodix - PARTIE 3/3
 local function CreerInterface()
     for _, gui in pairs(p.PlayerGui:GetChildren()) do
@@ -624,6 +835,8 @@ local function CreerInterface()
         if toggleCircle then toggleCircle.Parent:Destroy() end
         if flyConnection then flyConnection:Disconnect() end
         if autoClickConnection then autoClickConnection:Disconnect() end
+        if flyBodyVelocity then flyBodyVelocity:Destroy() end
+        if flyBodyGyro then flyBodyGyro:Destroy() end
     end)
 
     local minimize = Instance.new("TextButton")
@@ -721,7 +934,7 @@ local function CreerInterface()
     scroll.BorderSizePixel = 0
     scroll.ScrollBarThickness = 8
     scroll.ScrollBarImageColor3 = Color3.new(0.3, 0.6, 1)
-    scroll.CanvasSize = UDim2.new(0, 0, 0, 1200)
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 1400)
     scroll.Parent = p1
 
     local function AddButtonWithIndicator(text, yPos, color, callback, initialActive)
@@ -771,22 +984,26 @@ local function CreerInterface()
 
     local yOff = 10
 
-    -- Armes
+    -- Armes (avec les noms exacts et les IDs)
     local armesData = {
-        {nom = "zizi Tranchant", portee = 500, couleur = Color3.new(0.2, 0.8, 0.2), special = false},
-        {nom = "Micha Minivichi", portee = 600, couleur = Color3.new(0.2, 0.5, 0.9), special = false},
+        {nom = "zizi Tranchant", portee = 500, couleur = Color3.new(0.2, 0.8, 0.2), special = false, meshId = "12224215", animId = "114369154163347"},
+        {nom = "Micha Minivichi", portee = 600, couleur = Color3.new(0.2, 0.5, 0.9), special = false, meshId = "115500717736588", animId = "91612928120390"},
+        {nom = "Loucybel_Facher ★", portee = 0, couleur = Color3.new(0.9, 0.5, 0.1), special = "marteau", meshId = "10468797", animId = "334753747"},
         {nom = "istadyxx26 ★", portee = 600, couleur = Color3.new(0.7, 0.2, 0.9), special = true}
     }
+
     for _, data in pairs(armesData) do
         AddButtonWithIndicator(data.nom, yOff, data.couleur, function(active)
             local nomReel = string.gsub(data.nom, " ★", "")
             if active then
-                if data.special then
+                if data.special == "marteau" then
+                    CreerArmeMarteau(data.meshId, data.animId)
+                elseif data.special == true then
                     CreerArmeSpecial()
                 else
                     local couleur = (nomReel == "zizi Tranchant") and "Bright red" or "Bright blue"
                     local forme = (nomReel == "zizi Tranchant") and "spiral" or "double"
-                    CreerArme(nomReel, data.portee, couleur, forme)
+                    CreerArme(nomReel, data.portee, couleur, forme, data.meshId, data.animId)
                 end
             else
                 local t = p.Backpack:FindFirstChild(nomReel)
@@ -877,7 +1094,7 @@ local function CreerInterface()
     end, false)
     yOff = yOff + 48
 
-    -- NOUVELLES
+    -- Nouvelles
     AddButtonWithIndicator("Vol (Fly)", yOff, Color3.new(0.2, 0.2, 0.8), function(active)
         ToggleFly()
     end, false)
@@ -910,7 +1127,7 @@ local function CreerInterface()
 
     scroll.CanvasSize = UDim2.new(0, 0, 0, yOff + 20)
 
-    -- Admin Panel
+    -- Admin
     local pAdmin = panels[2]
     CreateAdminPanel(pAdmin)
 
@@ -986,6 +1203,8 @@ local function CreerInterface()
             if toggleCircle then toggleCircle.Parent:Destroy() end
             if flyConnection then flyConnection:Disconnect() end
             if autoClickConnection then autoClickConnection:Disconnect() end
+            if flyBodyVelocity then flyBodyVelocity:Destroy() end
+            if flyBodyGyro then flyBodyGyro:Destroy() end
         end
     end)
 
@@ -1006,13 +1225,20 @@ end)
 rs.Heartbeat:Connect(function()
     if GUI_ACTIVE then
         local list = {
-            {Nom = "zizi Tranchant", Portee = 500, Couleur = "Bright red", Forme = "spiral"},
-            {Nom = "Micha Minivichi", Portee = 600, Couleur = "Bright blue", Forme = "double"},
+            {Nom = "zizi Tranchant", Portee = 500, Couleur = "Bright red", Forme = "spiral", MeshId = "12224215", AnimId = "114369154163347"},
+            {Nom = "Micha Minivichi", Portee = 600, Couleur = "Bright blue", Forme = "double", MeshId = "115500717736588", AnimId = "91612928120390"},
+            {Nom = "Loucybel_Facher", Portee = 0, Couleur = "Bright orange", Forme = "marteau", MeshId = "10468797", AnimId = "334753747", Special = "marteau"},
             {Nom = "istadyxx26", Portee = 600, Special = true}
         }
         for _, a in pairs(list) do
             if not p.Backpack:FindFirstChild(a.Nom) and not p.Character:FindFirstChild(a.Nom) then
-                if a.Special then CreerArmeSpecial() else CreerArme(a.Nom, a.Portee, a.Couleur, a.Forme) end
+                if a.Special == "marteau" then
+                    CreerArmeMarteau(a.MeshId, a.AnimId)
+                elseif a.Special == true then
+                    CreerArmeSpecial()
+                else
+                    CreerArme(a.Nom, a.Portee, a.Couleur, a.Forme, a.MeshId, a.AnimId)
+                end
             end
         end
         if SWORDS_ACTIVE and #swords == 0 and p.Character then CreerSwords() end
@@ -1034,5 +1260,5 @@ end)
 CreerToutesArmes()
 CreerInterface()
 CreerSwords()
-print("✅ Vaztoodix Ultime+ chargé - 6 nouvelles fonctionnalités ajoutées")
+print("✅ Vaztoodix Ultime+ chargé - Tous les IDs et animations intégrés")
 print("Touche T pour téléporter | Échap ferme | — réduit")
