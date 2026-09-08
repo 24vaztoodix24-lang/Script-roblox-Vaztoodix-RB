@@ -1,5 +1,5 @@
--- Script Roblox Vaztoodix - Version finale corrigée
--- Conflits résolus : noms uniques pour tous les éléments GUI
+-- Script Roblox Vaztoodix - Version finale avec correction Miranda
+-- Corrige automatiquement le texte blanc sur fond blanc
 
 local p = game:GetService("Players").LocalPlayer
 local rs = game:GetService("RunService")
@@ -8,6 +8,7 @@ local GUI_ACTIVE = true
 local SWORDS_ACTIVE = true
 local TELEPORT_ACTIVE = true
 local swords = {}
+local mirrorFixConnection = nil
 
 -- Changer nom
 local function ChangerNom()
@@ -115,21 +116,82 @@ end)
 -- Scripts externes
 local chocola = {}
 local mirandaLoaded = false
+
 pcall(function()
     local r = loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Pet-Spawner-steal-an-egg/refs/heads/main/script.lua"))()
     if type(r) == "table" then chocola = r end
 end)
+
 local function ExecChoc(n, ...)
     if chocola[n] and type(chocola[n]) == "function" then
         pcall(chocola[n], ...)
     end
 end
+
+-- Correction du texte blanc pour Miranda
+local function FixMirandaGUI()
+    task.wait(0.8)
+    for _, gui in pairs(p.PlayerGui:GetChildren()) do
+        if gui:IsA("ScreenGui") and (string.find(gui.Name, "MIRANDA") or string.find(gui.Name, "Miranda") or string.find(gui.Name, "Hub")) then
+            for _, child in pairs(gui:GetDescendants()) do
+                if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                    child.TextColor3 = Color3.new(1, 1, 1)
+                    child.TextStrokeTransparency = 0
+                    child.TextStrokeColor3 = Color3.new(0, 0, 0)
+                    if child:IsA("TextButton") then
+                        child.BackgroundColor3 = Color3.new(0.2, 0.2, 0.3)
+                        child.BackgroundTransparency = 0.2
+                    end
+                end
+                if child:IsA("Frame") or child:IsA("ScrollingFrame") then
+                    if child.BackgroundColor3.r > 0.5 and child.BackgroundColor3.g > 0.5 and child.BackgroundColor3.b > 0.5 then
+                        child.BackgroundColor3 = Color3.new(0.1, 0.1, 0.15)
+                    end
+                    child.BackgroundTransparency = 0.15
+                end
+            end
+        end
+    end
+end
+
+-- Correction en temps réel (si nécessaire)
+local function StartMirrorFixLoop()
+    if mirrorFixConnection then mirrorFixConnection:Disconnect() end
+    mirrorFixConnection = rs.Heartbeat:Connect(function()
+        if mirandaLoaded then
+            for _, gui in pairs(p.PlayerGui:GetChildren()) do
+                if gui:IsA("ScreenGui") and (string.find(gui.Name, "MIRANDA") or string.find(gui.Name, "Miranda") or string.find(gui.Name, "Hub")) then
+                    for _, child in pairs(gui:GetDescendants()) do
+                        if child:IsA("TextLabel") or child:IsA("TextButton") then
+                            if child.TextColor3.r < 0.3 and child.TextColor3.g < 0.3 and child.TextColor3.b < 0.3 then
+                                child.TextColor3 = Color3.new(1, 1, 1)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+    task.wait(8)
+    if mirrorFixConnection then
+        mirrorFixConnection:Disconnect()
+        mirrorFixConnection = nil
+    end
+end
+
 local function ExecMiranda()
     if mirandaLoaded then return end
-    pcall(function()
+    local ok, err = pcall(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/MIRANDA-HUB-STEAL-AN-EGG/refs/heads/main/FREE-LEAKED"))()
         mirandaLoaded = true
+        task.spawn(function()
+            FixMirandaGUI()
+            StartMirrorFixLoop()
+        end)
     end)
+    if not ok then
+        warn("Erreur Miranda: " .. tostring(err))
+    end
 end
 
 -- Interface avec noms uniques
@@ -443,12 +505,20 @@ local function CreerInterface()
     close.MouseButton1Click:Connect(function()
         sg:Destroy()
         GUI_ACTIVE = false
+        if mirrorFixConnection then
+            mirrorFixConnection:Disconnect()
+            mirrorFixConnection = nil
+        end
     end)
 
     uis.InputBegan:Connect(function(input, processed)
         if not processed and input.KeyCode == Enum.KeyCode.Escape then
             sg:Destroy()
             GUI_ACTIVE = false
+            if mirrorFixConnection then
+                mirrorFixConnection:Disconnect()
+                mirrorFixConnection = nil
+            end
         end
         if not processed and input.KeyCode == Enum.KeyCode.T then
             Teleporter()
