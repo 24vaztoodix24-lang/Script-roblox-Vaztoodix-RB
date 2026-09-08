@@ -1,13 +1,11 @@
--- Script Roblox Vaztoodix - Version avec indicateurs visuels ON/OFF + réduction
-
+-- Script Roblox Vaztoodix - PARTIE 1/3
 local p = game:GetService("Players").LocalPlayer
 local rs = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
 local debris = game:GetService("Debris")
 
--- Variables de contrôle
+-- Variables
 local GUI_ACTIVE = true
-local WINDOW_VISIBLE = true
 local SWORDS_ACTIVE = true
 local TELEPORT_ACTIVE = true
 local AIMBOT_ACTIVE = false
@@ -18,6 +16,14 @@ local ANTI_AFK_ACTIVE = false
 local CLONE_ACTIVE = false
 local NOCLIP_ACTIVE = false
 
+-- Nouvelles
+local FLY_ACTIVE = false
+local SPEED_ACTIVE = false
+local JUMP_ACTIVE = false
+local INVISIBLE_ACTIVE = false
+local GODMODE_ACTIVE = false
+local AUTOCLICK_ACTIVE = false
+
 local swords = {}
 local particles = {}
 local clone = nil
@@ -27,6 +33,8 @@ local mirandaLoaded = false
 local mainScreenGui = nil
 local mainWindow = nil
 local toggleCircle = nil
+local flyConnection = nil
+local autoClickConnection = nil
 
 -- Changer nom
 local function ChangerNom()
@@ -34,8 +42,10 @@ local function ChangerNom()
     p.DisplayName = noms[math.random(1, #noms)] .. tostring(math.random(100, 999))
 end
 
--- === ARMES 3D ===
+-- === ARMES 3D (CORRIGÉES) ===
 local function CreerModeleArme(tool, couleur, forme)
+    local old = tool:FindFirstChild("Handle")
+    if old then old:Destroy() end
     local handle = Instance.new("Part")
     handle.Name = "Handle"
     handle.Size = Vector3.new(1.2, 0.3, 2.2)
@@ -44,13 +54,11 @@ local function CreerModeleArme(tool, couleur, forme)
     handle.Anchored = false
     handle.CanCollide = false
     handle.Parent = tool
-
     local light = Instance.new("PointLight")
     light.Parent = handle
     light.Range = 10
     light.Brightness = 4
     light.Color = handle.BrickColor.Color
-
     if forme == "spiral" then
         for i = 1, 4 do
             local ring = Instance.new("Part")
@@ -96,7 +104,9 @@ local function CreerArmeSpecial()
     t.RequiresHandle = true
     rs.RenderStepped:Connect(function()
         if t.Parent == p.Backpack or t.Parent == p.Character then
-            if t.Handle then t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.02, 0.02) end
+            if t.Handle then
+                t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.02, 0.02)
+            end
         end
     end)
     t.Activated:Connect(function()
@@ -159,7 +169,9 @@ local function CreerArme(nom, portee, couleur, forme)
     t.RequiresHandle = true
     rs.RenderStepped:Connect(function()
         if t.Parent == p.Backpack or t.Parent == p.Character then
-            if t.Handle then t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.015, 0) end
+            if t.Handle then
+                t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.015, 0)
+            end
         end
     end)
     t.Activated:Connect(function()
@@ -194,7 +206,7 @@ local function CreerToutesArmes()
     end
 end
 
--- === FONCTIONS EXISTANTES ===
+-- Téléport
 local function Teleporter()
     if not TELEPORT_ACTIVE then return end
     local m = p:GetMouse()
@@ -205,6 +217,7 @@ local function Teleporter()
     end
 end
 
+-- Épées orbitales (corrigées)
 local function CreerSwords()
     if not SWORDS_ACTIVE then return end
     for _, s in pairs(swords) do s:Destroy() end
@@ -237,14 +250,15 @@ local function CreerSwords()
     end
 end
 
-rs.Heartbeat:Connect(function()
+local swordUpdateConn
+swordUpdateConn = rs.Heartbeat:Connect(function()
     if SWORDS_ACTIVE and p.Character then
         local r = p.Character:FindFirstChild("HumanoidRootPart")
         if r then
             local ang = 0
             for _, s in pairs(swords) do
                 local w = s:FindFirstChild("Weld")
-                if w then
+                if w and w.Part0 == r then
                     ang = ang + 0.02
                     w.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, ang, 0) * CFrame.new(3, 0, 0)
                 end
@@ -253,7 +267,98 @@ rs.Heartbeat:Connect(function()
     end
 end)
 
+print("✅ Partie 1/3 chargée - continuation avec la partie 2")
+-- Script Roblox Vaztoodix - PARTIE 2/3
 -- === NOUVELLES FONCTIONNALITÉS ===
+
+-- 1. Vol (fly)
+local function ToggleFly()
+    FLY_ACTIVE = not FLY_ACTIVE
+    if FLY_ACTIVE then
+        local char = p.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            local hrp = char.HumanoidRootPart
+            flyConnection = rs.RenderStepped:Connect(function()
+                if not FLY_ACTIVE then return end
+                local move = Vector3.new(0,0,0)
+                if uis:IsKeyDown(Enum.KeyCode.W) then move = move + Vector3.new(0,0,-1) end
+                if uis:IsKeyDown(Enum.KeyCode.S) then move = move + Vector3.new(0,0,1) end
+                if uis:IsKeyDown(Enum.KeyCode.A) then move = move + Vector3.new(-1,0,0) end
+                if uis:IsKeyDown(Enum.KeyCode.D) then move = move + Vector3.new(1,0,0) end
+                if uis:IsKeyDown(Enum.KeyCode.Space) then move = move + Vector3.new(0,1,0) end
+                if uis:IsKeyDown(Enum.KeyCode.LeftShift) then move = move + Vector3.new(0,-1,0) end
+                if move.Magnitude > 0 then
+                    hrp.Velocity = move.Unit * 50
+                else
+                    hrp.Velocity = Vector3.new(0,0,0)
+                end
+            end)
+        end
+    else
+        if flyConnection then flyConnection:Disconnect() flyConnection = nil end
+        local char = p.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.Velocity = Vector3.new(0,0,0)
+        end
+    end
+end
+
+-- 2. Speed boost
+local function ToggleSpeed()
+    SPEED_ACTIVE = not SPEED_ACTIVE
+    local char = p.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.WalkSpeed = SPEED_ACTIVE and 50 or 16
+    end
+end
+
+-- 3. Jump boost
+local function ToggleJump()
+    JUMP_ACTIVE = not JUMP_ACTIVE
+    local char = p.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.JumpPower = JUMP_ACTIVE and 100 or 50
+    end
+end
+
+-- 4. Invisibilité
+local function ToggleInvisible()
+    INVISIBLE_ACTIVE = not INVISIBLE_ACTIVE
+    local char = p.Character
+    if char then
+        for _, part in pairs(char:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = INVISIBLE_ACTIVE and 1 or 0
+            end
+        end
+    end
+end
+
+-- 5. Godmode
+local function ToggleGodmode()
+    GODMODE_ACTIVE = not GODMODE_ACTIVE
+    local char = p.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.MaxHealth = GODMODE_ACTIVE and math.huge or 100
+        char.Humanoid.Health = char.Humanoid.MaxHealth
+    end
+end
+
+-- 6. Auto-click
+local function ToggleAutoClick()
+    AUTOCLICK_ACTIVE = not AUTOCLICK_ACTIVE
+    if AUTOCLICK_ACTIVE then
+        autoClickConnection = rs.RenderStepped:Connect(function()
+            if AUTOCLICK_ACTIVE then
+                mouse1click()
+            end
+        end)
+    else
+        if autoClickConnection then autoClickConnection:Disconnect() autoClickConnection = nil end
+    end
+end
+
+-- === AUTRES FONCTIONS ===
 
 local function AimbotLoop()
     if not AIMBOT_ACTIVE or not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
@@ -401,6 +506,7 @@ local function ToggleNoclip()
     end
 end
 
+-- Admin Panel
 local function CreateAdminPanel(parent)
     local scroll = Instance.new("ScrollingFrame")
     scroll.Size = UDim2.new(1, 0, 1, 0)
@@ -408,7 +514,6 @@ local function CreateAdminPanel(parent)
     scroll.BorderSizePixel = 0
     scroll.ScrollBarThickness = 8
     scroll.Parent = parent
-
     local y = 0
     local function RefreshAdmin()
         for _, child in pairs(scroll:GetChildren()) do child:Destroy() end
@@ -439,7 +544,7 @@ local function CreateAdminPanel(parent)
                 info.Size = UDim2.new(0, 100, 0, 20)
                 info.Position = UDim2.new(0.5, 130, 0, y + 8)
                 info.BackgroundTransparency = 1
-                info.Text = "Click = TP | Right = Kill"
+                info.Text = "Click=TP | Right=Kill"
                 info.TextColor3 = Color3.new(0.6, 0.6, 0.6)
                 info.TextSize = 10
                 info.Font = Enum.Font.Gotham
@@ -458,7 +563,8 @@ local function CreateAdminPanel(parent)
     end)
 end
 
--- === INTERFACE AVEC INDICATEURS ET RÉDUCTION ===
+print("✅ Partie 2/3 chargée - continuation avec la partie 3")
+-- Script Roblox Vaztoodix - PARTIE 3/3
 local function CreerInterface()
     for _, gui in pairs(p.PlayerGui:GetChildren()) do
         if gui.Name == "VaztoodixHub" or gui.Name == "VaztoodixToggle" then
@@ -497,7 +603,7 @@ local function CreerInterface()
     title.Position = UDim2.new(0, 0, 0, 0)
     title.BackgroundColor3 = Color3.new(0.1, 0.2, 0.5)
     title.BackgroundTransparency = 0.2
-    title.Text = "VAZTOODIX ™ ULTIMATE"
+    title.Text = "VAZTOODIX ™ ULTIMATE+"
     title.TextColor3 = Color3.new(0.6, 0.8, 1)
     title.TextSize = 26
     title.Font = Enum.Font.GothamBold
@@ -516,6 +622,8 @@ local function CreerInterface()
         sg:Destroy()
         GUI_ACTIVE = false
         if toggleCircle then toggleCircle.Parent:Destroy() end
+        if flyConnection then flyConnection:Disconnect() end
+        if autoClickConnection then autoClickConnection:Disconnect() end
     end)
 
     local minimize = Instance.new("TextButton")
@@ -535,333 +643,366 @@ local function CreerInterface()
             toggleGui.ResetOnSpawn = false
             toggleGui.Parent = p.PlayerGui
             toggleGui.Enabled = true
-
             local circle = Instance.new("ImageButton")
             circle.Size = UDim2.new(0, 60, 0, 60)
             circle.Position = UDim2.new(0.02, 0, 0.85, 0)
             circle.BackgroundColor3 = Color3.new(0.1, 0.4, 0.8)
             circle.BackgroundTransparency = 0.2
             circle.BorderSizePixel = 2
-circle.BorderColor3 = Color3.new(0.6, 0.8, 1)
-circle.Image = "rbxassetid://1787805705"
-circle.ImageTransparency = 0.3
-circle.ImageColor3 = Color3.new(1,1,1)
-circle.Parent = toggleGui
-
-local label = Instance.new("TextLabel")
-label.Size = UDim2.new(1, 0, 1, 0)
-label.BackgroundTransparency = 1
-label.Text = "Vaz"
-label.TextColor3 = Color3.new(1, 1, 1)
-label.TextSize = 18
-label.Font = Enum.Font.GothamBold
-label.Parent = circle
-
-toggleCircle = circle
-circle.MouseButton1Click:Connect(function()
-    win.Visible = true
-    if toggleGui then toggleGui:Destroy() end
-    toggleCircle = nil
-end)
-end
-end)
-
--- Onglets
-local tabs = Instance.new("Frame")
-tabs.Size = UDim2.new(1, -20, 0, 40)
-tabs.Position = UDim2.new(0, 10, 0, 55)
-tabs.BackgroundTransparency = 1
-tabs.Parent = win
-
-local tabNames = {"Principale", "Admin", "Crédits", "Chocola", "Miranda"}
-local tabBtns = {}
-local panels = {}
-
-for i, name in pairs(tabNames) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 110, 0, 32)
-    btn.Position = UDim2.new(0, (i-1) * 115, 0, 0)
-    btn.BackgroundColor3 = Color3.new(0.15, 0.25, 0.5)
-    btn.Text = name
-    btn.TextColor3 = Color3.new(0.8, 0.9, 1)
-    btn.TextSize = 14
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = tabs
-    tabBtns[i] = btn
-
-    local panel = Instance.new("Frame")
-    panel.Size = UDim2.new(1, -20, 1, -100)
-    panel.Position = UDim2.new(0, 10, 0, 100)
-    panel.BackgroundTransparency = 1
-    panel.Visible = (i == 1)
-    panel.Parent = win
-    panels[i] = panel
-
-    btn.MouseButton1Click:Connect(function()
-        for j, pnl in pairs(panels) do
-            pnl.Visible = (j == i)
-        end
-        for j, b in pairs(tabBtns) do
-            b.BackgroundColor3 = (j == i) and Color3.new(0.2, 0.4, 0.8) or Color3.new(0.15, 0.25, 0.5)
+            circle.BorderColor3 = Color3.new(0.6, 0.8, 1)
+            circle.Image = "rbxassetid://1787805705"
+            circle.ImageTransparency = 0.3
+            circle.ImageColor3 = Color3.new(1,1,1)
+            circle.Parent = toggleGui
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.BackgroundTransparency = 1
+            label.Text = "Vaz"
+            label.TextColor3 = Color3.new(1, 1, 1)
+            label.TextSize = 18
+            label.Font = Enum.Font.GothamBold
+            label.Parent = circle
+            toggleCircle = circle
+            circle.MouseButton1Click:Connect(function()
+                win.Visible = true
+                if toggleGui then toggleGui:Destroy() end
+                toggleCircle = nil
+            end)
         end
     end)
-end
 
--- Panel Principal (ScrollingFrame)
-local p1 = panels[1]
-local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, 0, 1, 0)
-scroll.Position = UDim2.new(0, 0, 0, 0)
-scroll.BackgroundTransparency = 1
-scroll.BorderSizePixel = 0
-scroll.ScrollBarThickness = 8
-scroll.ScrollBarImageColor3 = Color3.new(0.3, 0.6, 1)
-scroll.CanvasSize = UDim2.new(0, 0, 0, 900)
-scroll.Parent = p1
+    -- Onglets
+    local tabs = Instance.new("Frame")
+    tabs.Size = UDim2.new(1, -20, 0, 40)
+    tabs.Position = UDim2.new(0, 10, 0, 55)
+    tabs.BackgroundTransparency = 1
+    tabs.Parent = win
 
-local function AddButtonWithIndicator(text, yPos, color, callback, initialActive)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(0, 280, 0, 40)
-    container.Position = UDim2.new(0.5, -140, 0, yPos)
-    container.BackgroundTransparency = 1
-    container.Parent = scroll
+    local tabNames = {"Principale", "Admin", "Crédits", "Chocola", "Miranda"}
+    local tabBtns = {}
+    local panels = {}
 
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 200, 0, 38)
-    btn.Position = UDim2.new(0, 0, 0, 0)
-    btn.BackgroundColor3 = color or Color3.new(0.2, 0.3, 0.6)
-    btn.Text = text
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.TextSize = 14
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = container
+    for i, name in pairs(tabNames) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 110, 0, 32)
+        btn.Position = UDim2.new(0, (i-1) * 115, 0, 0)
+        btn.BackgroundColor3 = Color3.new(0.15, 0.25, 0.5)
+        btn.Text = name
+        btn.TextColor3 = Color3.new(0.8, 0.9, 1)
+        btn.TextSize = 14
+        btn.Font = Enum.Font.GothamBold
+        btn.Parent = tabs
+        tabBtns[i] = btn
 
-    local indicator = Instance.new("Frame")
-    indicator.Size = UDim2.new(0, 20, 0, 20)
-    indicator.Position = UDim2.new(1, 10, 0.5, -10)
-    indicator.BackgroundColor3 = initialActive and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-    indicator.BorderSizePixel = 1
-    indicator.BorderColor3 = Color3.new(1, 1, 1)
-    indicator.Parent = container
+        local panel = Instance.new("Frame")
+        panel.Size = UDim2.new(1, -20, 1, -100)
+        panel.Position = UDim2.new(0, 10, 0, 100)
+        panel.BackgroundTransparency = 1
+        panel.Visible = (i == 1)
+        panel.Parent = win
+        panels[i] = panel
 
-    local stateText = Instance.new("TextLabel")
-    stateText.Size = UDim2.new(1, 0, 1, 0)
-    stateText.BackgroundTransparency = 1
-    stateText.Text = initialActive and "ON" or "OFF"
-    stateText.TextColor3 = Color3.new(1, 1, 1)
-    stateText.TextSize = 10
-    stateText.Font = Enum.Font.GothamBold
-    stateText.Parent = indicator
-
-    local act = initialActive
-    btn.MouseButton1Click:Connect(function()
-        act = not act
-        btn.BackgroundColor3 = act and color or Color3.new(0.5, 0.1, 0.1)
-        indicator.BackgroundColor3 = act and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-        stateText.Text = act and "ON" or "OFF"
-        callback(act)
-    end)
-    return container
-end
-
-local yOff = 10
-
-local armesData = {
-    {nom = "zizi Tranchant", portee = 500, couleur = Color3.new(0.2, 0.8, 0.2), special = false},
-    {nom = "Micha Minivichi", portee = 600, couleur = Color3.new(0.2, 0.5, 0.9), special = false},
-    {nom = "istadyxx26 ★", portee = 600, couleur = Color3.new(0.7, 0.2, 0.9), special = true}
-}
-for _, data in pairs(armesData) do
-    AddButtonWithIndicator(data.nom, yOff, data.couleur, function(active)
-        local nomReel = string.gsub(data.nom, " ★", "")
-        if active then
-            if data.special then
-                CreerArmeSpecial()
-            else
-                local couleur = (nomReel == "zizi Tranchant") and "Bright red" or "Bright blue"
-                local forme = (nomReel == "zizi Tranchant") and "spiral" or "double"
-                CreerArme(nomReel, data.portee, couleur, forme)
+        btn.MouseButton1Click:Connect(function()
+            for j, pnl in pairs(panels) do
+                pnl.Visible = (j == i)
             end
-        else
-            local t = p.Backpack:FindFirstChild(nomReel)
-            if t then t:Destroy() end
-            t = p.Character:FindFirstChild(nomReel)
-            if t then t:Destroy() end
-        end
-    end, true)
-    yOff = yOff + 48
-end
-
-AddButtonWithIndicator("Téléport", yOff, Color3.new(0.1, 0.4, 0.8), function(active)
-    TELEPORT_ACTIVE = active
-end, true)
-yOff = yOff + 48
-
-local killBtn = Instance.new("TextButton")
-killBtn.Size = UDim2.new(0, 200, 0, 38)
-killBtn.Position = UDim2.new(0.5, -100, 0, yOff)
-killBtn.BackgroundColor3 = Color3.new(0.7, 0.1, 0.1)
-killBtn.Text = "Tuer tous"
-killBtn.TextColor3 = Color3.new(1, 1, 1)
-killBtn.TextSize = 14
-killBtn.Font = Enum.Font.GothamBold
-killBtn.Parent = scroll
-killBtn.MouseButton1Click:Connect(function()
-    for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-        if v ~= p and v.Character then
-            local h = v.Character:FindFirstChild("Humanoid")
-            if h then
-                h.Health = 0
-                local e = Instance.new("Explosion")
-                e.Position = v.Character.HumanoidRootPart.Position
-                e.BlastRadius = 10
-                e.BlastPressure = 0
-                e.Parent = workspace
+            for j, b in pairs(tabBtns) do
+                b.BackgroundColor3 = (j == i) and Color3.new(0.2, 0.4, 0.8) or Color3.new(0.15, 0.25, 0.5)
             end
-        end
-    end
-    ChangerNom()
-end)
-yOff = yOff + 48
-
-AddButtonWithIndicator("Épées orbitales", yOff, Color3.new(0.8, 0.6, 0), function(active)
-    SWORDS_ACTIVE = active
-    if active then CreerSwords() else for _, s in pairs(swords) do s:Destroy() end swords = {} end
-end, true)
-yOff = yOff + 48
-
-AddButtonWithIndicator("Aimbot", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
-    AIMBOT_ACTIVE = active
-end, false)
-yOff = yOff + 48
-
-AddButtonWithIndicator("Wallhack", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
-    WALLHACK_ACTIVE = active
-    UpdateWallhack()
-end, false)
-yOff = yOff + 48
-
-AddButtonWithIndicator("Vol véhicule", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
-    STEAL_VEHICLE_ACTIVE = active
-    if active then StealVehicle() end
-end, false)
-yOff = yOff + 48
-
-AddButtonWithIndicator("Particules", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
-    PARTICLES_ACTIVE = active
-    ToggleParticles()
-end, false)
-yOff = yOff + 48
-
-AddButtonWithIndicator("Anti-AFK", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
-    ANTI_AFK_ACTIVE = active
-    ToggleAntiAFK()
-end, false)
-yOff = yOff + 48
-
-AddButtonWithIndicator("Clone", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
-    CLONE_ACTIVE = active
-    ToggleClone()
-end, false)
-yOff = yOff + 48
-
-AddButtonWithIndicator("Noclip", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
-    NOCLIP_ACTIVE = active
-    ToggleNoclip()
-end, false)
-yOff = yOff + 48
-
-scroll.CanvasSize = UDim2.new(0, 0, 0, yOff + 20)
-
--- Admin Panel
-local pAdmin = panels[2]
-CreateAdminPanel(pAdmin)
-
--- Crédits
-local p2 = panels[3]
-local credits = Instance.new("TextLabel")
-credits.Size = UDim2.new(1, 0, 1, 0)
-credits.BackgroundTransparency = 1
-credits.Text = "Crédits :\nAntonio Vaztoodix\nMicha\nIsmaël Daniel\nDeepSeek"
-credits.TextColor3 = Color3.new(0.7, 0.9, 1)
-credits.TextSize = 22
-credits.Font = Enum.Font.GothamBold
-credits.TextScaled = true
-credits.Parent = p2
-
--- Chocola
-local p3 = panels[4]
-local chocFns = {"m", "Ma", "Fa", "K"}
-for i, fn in pairs(chocFns) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 180, 0, 40)
-    btn.Position = UDim2.new(0.5, -90, 0, 20 + (i-1) * 50)
-    btn.BackgroundColor3 = Color3.new(0.15, 0.3, 0.6)
-    btn.Text = "Lancer " .. fn .. "()"
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.TextSize = 14
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = p3
-    btn.MouseButton1Click:Connect(function()
-        if chocola[fn] and type(chocola[fn]) == "function" then
-            pcall(chocola[fn])
-        end
-    end)
-end
-
--- Miranda
-local p4 = panels[5]
-local mirBtn = Instance.new("TextButton")
-mirBtn.Size = UDim2.new(0, 220, 0, 50)
-mirBtn.Position = UDim2.new(0.5, -110, 0, 50)
-mirBtn.BackgroundColor3 = Color3.new(0.7, 0.1, 0.1)
-mirBtn.Text = "Lancer Miranda Hub"
-mirBtn.TextColor3 = Color3.new(1, 1, 1)
-mirBtn.TextSize = 16
-mirBtn.Font = Enum.Font.GothamBold
-mirBtn.Parent = p4
-mirBtn.MouseButton1Click:Connect(function()
-    if not mirandaLoaded then
-        pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/MIRANDA-HUB-STEAL-AN-EGG/refs/heads/main/FREE-LEAKED"))()
-            mirandaLoaded = true
-            mirBtn.Text = "✓ Miranda lancé"
-            mirBtn.BackgroundColor3 = Color3.new(0.1, 0.6, 0.1)
         end)
     end
-end)
 
-local mirInfo = Instance.new("TextLabel")
-mirInfo.Size = UDim2.new(1, 0, 0, 30)
-mirInfo.Position = UDim2.new(0, 0, 0, 120)
-mirInfo.BackgroundTransparency = 1
-mirInfo.Text = "Cliquez pour charger Miranda Hub"
-mirInfo.TextColor3 = Color3.new(0.6, 0.8, 1)
-mirInfo.TextSize = 14
-mirInfo.Font = Enum.Font.Gotham
-mirInfo.Parent = p4
+    -- Panel Principal (ScrollingFrame)
+    local p1 = panels[1]
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1, 0, 1, 0)
+    scroll.Position = UDim2.new(0, 0, 0, 0)
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 8
+    scroll.ScrollBarImageColor3 = Color3.new(0.3, 0.6, 1)
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 1200)
+    scroll.Parent = p1
 
-uis.InputBegan:Connect(function(input, processed)
-    if not processed and input.KeyCode == Enum.KeyCode.T then Teleporter() end
-    if not processed and input.KeyCode == Enum.KeyCode.Escape then
-        sg:Destroy()
-        GUI_ACTIVE = false
-        if toggleCircle then toggleCircle.Parent:Destroy() end
+    local function AddButtonWithIndicator(text, yPos, color, callback, initialActive)
+        local container = Instance.new("Frame")
+        container.Size = UDim2.new(0, 280, 0, 40)
+        container.Position = UDim2.new(0.5, -140, 0, yPos)
+        container.BackgroundTransparency = 1
+        container.Parent = scroll
+
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 200, 0, 38)
+        btn.Position = UDim2.new(0, 0, 0, 0)
+        btn.BackgroundColor3 = color or Color3.new(0.2, 0.3, 0.6)
+        btn.Text = text
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.TextSize = 14
+        btn.Font = Enum.Font.GothamBold
+        btn.Parent = container
+
+        local indicator = Instance.new("Frame")
+        indicator.Size = UDim2.new(0, 20, 0, 20)
+        indicator.Position = UDim2.new(1, 10, 0.5, -10)
+        indicator.BackgroundColor3 = initialActive and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+        indicator.BorderSizePixel = 1
+        indicator.BorderColor3 = Color3.new(1, 1, 1)
+        indicator.Parent = container
+
+        local stateText = Instance.new("TextLabel")
+        stateText.Size = UDim2.new(1, 0, 1, 0)
+        stateText.BackgroundTransparency = 1
+        stateText.Text = initialActive and "ON" or "OFF"
+        stateText.TextColor3 = Color3.new(1, 1, 1)
+        stateText.TextSize = 10
+        stateText.Font = Enum.Font.GothamBold
+        stateText.Parent = indicator
+
+        local act = initialActive
+        btn.MouseButton1Click:Connect(function()
+            act = not act
+            btn.BackgroundColor3 = act and color or Color3.new(0.5, 0.1, 0.1)
+            indicator.BackgroundColor3 = act and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+            stateText.Text = act and "ON" or "OFF"
+            callback(act)
+        end)
+        return container
     end
-end)
 
-print("✅ Interface Vaztoodix avec indicateurs ON/OFF et réduction")
-return sg
+    local yOff = 10
+
+    -- Armes
+    local armesData = {
+        {nom = "zizi Tranchant", portee = 500, couleur = Color3.new(0.2, 0.8, 0.2), special = false},
+        {nom = "Micha Minivichi", portee = 600, couleur = Color3.new(0.2, 0.5, 0.9), special = false},
+        {nom = "istadyxx26 ★", portee = 600, couleur = Color3.new(0.7, 0.2, 0.9), special = true}
+    }
+    for _, data in pairs(armesData) do
+        AddButtonWithIndicator(data.nom, yOff, data.couleur, function(active)
+            local nomReel = string.gsub(data.nom, " ★", "")
+            if active then
+                if data.special then
+                    CreerArmeSpecial()
+                else
+                    local couleur = (nomReel == "zizi Tranchant") and "Bright red" or "Bright blue"
+                    local forme = (nomReel == "zizi Tranchant") and "spiral" or "double"
+                    CreerArme(nomReel, data.portee, couleur, forme)
+                end
+            else
+                local t = p.Backpack:FindFirstChild(nomReel)
+                if t then t:Destroy() end
+                t = p.Character:FindFirstChild(nomReel)
+                if t then t:Destroy() end
+            end
+        end, true)
+        yOff = yOff + 48
+    end
+
+    AddButtonWithIndicator("Téléport", yOff, Color3.new(0.1, 0.4, 0.8), function(active)
+        TELEPORT_ACTIVE = active
+    end, true)
+    yOff = yOff + 48
+
+    local killBtn = Instance.new("TextButton")
+    killBtn.Size = UDim2.new(0, 200, 0, 38)
+    killBtn.Position = UDim2.new(0.5, -100, 0, yOff)
+    killBtn.BackgroundColor3 = Color3.new(0.7, 0.1, 0.1)
+    killBtn.Text = "Tuer tous"
+    killBtn.TextColor3 = Color3.new(1, 1, 1)
+    killBtn.TextSize = 14
+    killBtn.Font = Enum.Font.GothamBold
+    killBtn.Parent = scroll
+    killBtn.MouseButton1Click:Connect(function()
+        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
+            if v ~= p and v.Character then
+                local h = v.Character:FindFirstChild("Humanoid")
+                if h then
+                    h.Health = 0
+                    local e = Instance.new("Explosion")
+                    e.Position = v.Character.HumanoidRootPart.Position
+                    e.BlastRadius = 10
+                    e.BlastPressure = 0
+                    e.Parent = workspace
+                end
+            end
+        end
+        ChangerNom()
+    end)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Épées orbitales", yOff, Color3.new(0.8, 0.6, 0), function(active)
+        SWORDS_ACTIVE = active
+        if active then CreerSwords() else for _, s in pairs(swords) do s:Destroy() end swords = {} end
+    end, true)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Aimbot", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
+        AIMBOT_ACTIVE = active
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Wallhack", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
+        WALLHACK_ACTIVE = active
+        UpdateWallhack()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Vol véhicule", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
+        STEAL_VEHICLE_ACTIVE = active
+        if active then StealVehicle() end
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Particules", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
+        PARTICLES_ACTIVE = active
+        ToggleParticles()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Anti-AFK", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
+        ANTI_AFK_ACTIVE = active
+        ToggleAntiAFK()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Clone", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
+        CLONE_ACTIVE = active
+        ToggleClone()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Noclip", yOff, Color3.new(0.2, 0.8, 0.2), function(active)
+        NOCLIP_ACTIVE = active
+        ToggleNoclip()
+    end, false)
+    yOff = yOff + 48
+
+    -- NOUVELLES
+    AddButtonWithIndicator("Vol (Fly)", yOff, Color3.new(0.2, 0.2, 0.8), function(active)
+        ToggleFly()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Speed boost", yOff, Color3.new(0.2, 0.8, 0.8), function(active)
+        ToggleSpeed()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Jump boost", yOff, Color3.new(0.8, 0.8, 0.2), function(active)
+        ToggleJump()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Invisibilité", yOff, Color3.new(0.5, 0.2, 0.8), function(active)
+        ToggleInvisible()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Godmode", yOff, Color3.new(1, 0.5, 0), function(active)
+        ToggleGodmode()
+    end, false)
+    yOff = yOff + 48
+
+    AddButtonWithIndicator("Auto-click", yOff, Color3.new(0.8, 0.2, 0.8), function(active)
+        ToggleAutoClick()
+    end, false)
+    yOff = yOff + 48
+
+    scroll.CanvasSize = UDim2.new(0, 0, 0, yOff + 20)
+
+    -- Admin Panel
+    local pAdmin = panels[2]
+    CreateAdminPanel(pAdmin)
+
+    -- Crédits
+    local p2 = panels[3]
+    local credits = Instance.new("TextLabel")
+    credits.Size = UDim2.new(1, 0, 1, 0)
+    credits.BackgroundTransparency = 1
+    credits.Text = "Crédits :\nAntonio Vaztoodix\nMicha\nIsmaël Daniel\nDeepSeek"
+    credits.TextColor3 = Color3.new(0.7, 0.9, 1)
+    credits.TextSize = 22
+    credits.Font = Enum.Font.GothamBold
+    credits.TextScaled = true
+    credits.Parent = p2
+
+    -- Chocola
+    local p3 = panels[4]
+    local chocFns = {"m", "Ma", "Fa", "K"}
+    for i, fn in pairs(chocFns) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 180, 0, 40)
+        btn.Position = UDim2.new(0.5, -90, 0, 20 + (i-1) * 50)
+        btn.BackgroundColor3 = Color3.new(0.15, 0.3, 0.6)
+        btn.Text = "Lancer " .. fn .. "()"
+        btn.TextColor3 = Color3.new(1, 1, 1)
+        btn.TextSize = 14
+        btn.Font = Enum.Font.GothamBold
+        btn.Parent = p3
+        btn.MouseButton1Click:Connect(function()
+            if chocola[fn] and type(chocola[fn]) == "function" then
+                pcall(chocola[fn])
+            end
+        end)
+    end
+
+    -- Miranda
+    local p4 = panels[5]
+    local mirBtn = Instance.new("TextButton")
+    mirBtn.Size = UDim2.new(0, 220, 0, 50)
+    mirBtn.Position = UDim2.new(0.5, -110, 0, 50)
+    mirBtn.BackgroundColor3 = Color3.new(0.7, 0.1, 0.1)
+    mirBtn.Text = "Lancer Miranda Hub"
+    mirBtn.TextColor3 = Color3.new(1, 1, 1)
+    mirBtn.TextSize = 16
+    mirBtn.Font = Enum.Font.GothamBold
+    mirBtn.Parent = p4
+    mirBtn.MouseButton1Click:Connect(function()
+        if not mirandaLoaded then
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/MIRANDA-HUB-STEAL-AN-EGG/refs/heads/main/FREE-LEAKED"))()
+                mirandaLoaded = true
+                mirBtn.Text = "✓ Miranda lancé"
+                mirBtn.BackgroundColor3 = Color3.new(0.1, 0.6, 0.1)
+            end)
+        end
+    end)
+
+    local mirInfo = Instance.new("TextLabel")
+    mirInfo.Size = UDim2.new(1, 0, 0, 30)
+    mirInfo.Position = UDim2.new(0, 0, 0, 120)
+    mirInfo.BackgroundTransparency = 1
+    mirInfo.Text = "Cliquez pour charger Miranda Hub"
+    mirInfo.TextColor3 = Color3.new(0.6, 0.8, 1)
+    mirInfo.TextSize = 14
+    mirInfo.Font = Enum.Font.Gotham
+    mirInfo.Parent = p4
+
+    uis.InputBegan:Connect(function(input, processed)
+        if not processed and input.KeyCode == Enum.KeyCode.T then Teleporter() end
+        if not processed and input.KeyCode == Enum.KeyCode.Escape then
+            sg:Destroy()
+            GUI_ACTIVE = false
+            if toggleCircle then toggleCircle.Parent:Destroy() end
+            if flyConnection then flyConnection:Disconnect() end
+            if autoClickConnection then autoClickConnection:Disconnect() end
+        end
+    end)
+
+    print("✅ Interface Vaztoodix+ créée")
+    return sg
 end
 
--- Boucles
+-- === BOUCLES ===
 rs.Heartbeat:Connect(AimbotLoop)
+
 task.spawn(function()
     while GUI_ACTIVE do
         task.wait(1)
         if WALLHACK_ACTIVE then UpdateWallhack() end
     end
 end)
+
 rs.Heartbeat:Connect(function()
     if GUI_ACTIVE then
         local list = {
@@ -877,19 +1018,21 @@ rs.Heartbeat:Connect(function()
         if SWORDS_ACTIVE and #swords == 0 and p.Character then CreerSwords() end
     end
 end)
+
 task.spawn(function()
     while task.wait(30) do
         if GUI_ACTIVE then ChangerNom() end
     end
 end)
+
 pcall(function()
     local r = loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Pet-Spawner-steal-an-egg/refs/heads/main/script.lua"))()
     if type(r) == "table" then chocola = r end
 end)
 
--- Lancement
+-- === LANCEMENT ===
 CreerToutesArmes()
 CreerInterface()
 CreerSwords()
-print("✅ Vaztoodix Ultime chargé - Indicateurs ON/OFF, bouton réduire, cercle Vaz")
+print("✅ Vaztoodix Ultime+ chargé - 6 nouvelles fonctionnalités ajoutées")
 print("Touche T pour téléporter | Échap ferme | — réduit")
