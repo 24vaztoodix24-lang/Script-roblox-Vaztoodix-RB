@@ -1,140 +1,116 @@
--- Script Roblox pour Delta Executor / Solara v3
--- Spawn de 2 armes 1-hit + téléportation + effets visuels (épées orbitales)
+-- Script Roblox Vaztoodix - Version compacte (tout en un)
 
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+local p=game:GetService("Players").LocalPlayer
+local rs=game:GetService("RunService")
+local uis=game:GetService("UserInputService")
+local GUI_ACTIVE=true
+local SWORDS_ACTIVE=true
+local TELEPORT_ACTIVE=true
+local swords={}
+local currentTab="Main"
 
--- Configuration
-local ARMES = {
-    {Nom = "zizi Tranchant", Portee = 500},
-    {Nom = "Micha Minivichi", Portee = 600}
-}
-local GUI_ACTIVE = true
-local TELEPORT_ACTIVE = true
-local SWORDS_ACTIVE = true
-local swords = {} -- pour stocker les épées
+-- Armes
+local ARMES={{Nom="zizi Tranchant",Portee=500},{Nom="Micha Minivichi",Portee=600}}
 
--- Fonction de changement de nom
+-- Changer nom
 local function ChangerNom()
-    local noms = {"Alpha_99", "Beta_X", "Gamma_7", "Delta_Zero", "Echo_4"}
-    local nouveauNom = noms[math.random(1, #noms)] .. tostring(math.random(100, 999))
-    LocalPlayer.DisplayName = nouveauNom
+    local noms={"Alpha_99","Beta_X","Gamma_7","Delta_Zero","Echo_4"}
+    p.DisplayName=noms[math.random(1,#noms)]..tostring(math.random(100,999))
 end
 
--- Création d'une arme
-local function CreerArme(nomArme, portee)
-    local tool = Instance.new("Tool")
-    tool.Name = nomArme
-    tool.RequiresHandle = false
-    tool.CanBeDropped = false
-    tool.Parent = LocalPlayer.Backpack
-
-    tool.Activated:Connect(function()
-        local mouse = LocalPlayer:GetMouse()
-        if not mouse then return end
-        local targetPos = mouse.Hit.Position
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local char = player.Character
-                local humanoid = char:FindFirstChild("Humanoid")
-                if humanoid and char:FindFirstChild("HumanoidRootPart") then
-                    local distance = (char.HumanoidRootPart.Position - targetPos).Magnitude
-                    if distance <= portee then
-                        humanoid.Health = 0
-                        -- Effet d'explosion sur le joueur tué
-                        local explosion = Instance.new("Explosion")
-                        explosion.Position = char.HumanoidRootPart.Position
-                        explosion.BlastRadius = 10
-                        explosion.BlastPressure = 0
-                        explosion.Parent = workspace
+-- Créer arme
+local function CreerArme(nom,portee)
+    local t=Instance.new("Tool")
+    t.Name=nom
+    t.RequiresHandle=false
+    t.CanBeDropped=false
+    t.Parent=p.Backpack
+    t.Activated:Connect(function()
+        local m=p:GetMouse()
+        if not m then return end
+        local pos=m.Hit.Position
+        for _,v in pairs(game:GetService("Players"):GetPlayers())do
+            if v~=p and v.Character then
+                local h=v.Character:FindFirstChild("Humanoid")
+                if h and v.Character:FindFirstChild("HumanoidRootPart")then
+                    if (v.Character.HumanoidRootPart.Position-pos).Magnitude<=portee then
+                        h.Health=0
+                        local e=Instance.new("Explosion")
+                        e.Position=v.Character.HumanoidRootPart.Position
+                        e.BlastRadius=10
+                        e.BlastPressure=0
+                        e.Parent=workspace
                         ChangerNom()
                     end
                 end
             end
         end
     end)
-    return tool
+    return t
 end
-
--- Création des 2 armes
 local function CreerToutesArmes()
-    for _, arme in pairs(ARMES) do
-        if not LocalPlayer.Backpack:FindFirstChild(arme.Nom) and not LocalPlayer.Character:FindFirstChild(arme.Nom) then
-            CreerArme(arme.Nom, arme.Portee)
+    for _,a in pairs(ARMES)do
+        if not p.Backpack:FindFirstChild(a.Nom)and not p.Character:FindFirstChild(a.Nom)then
+            CreerArme(a.Nom,a.Portee)
         end
     end
 end
 
--- Téléportation vers la souris
+-- Téléport
 local function Teleporter()
     if not TELEPORT_ACTIVE then return end
-    local mouse = LocalPlayer:GetMouse()
-    if not mouse then return end
-    local targetPos = mouse.Hit.Position
-    local char = LocalPlayer.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        char:SetPrimaryPartCFrame(CFrame.new(targetPos))
+    local m=p:GetMouse()
+    if not m then return end
+    local c=p.Character
+    if c and c:FindFirstChild("HumanoidRootPart")then
+        c:SetPrimaryPartCFrame(CFrame.new(m.Hit.Position))
     end
 end
 
--- Création des épées orbitales
+-- Épées orbitales
 local function CreerSwords()
     if not SWORDS_ACTIVE then return end
-    -- Supprimer les anciennes
-    for _, sword in pairs(swords) do
-        sword:Destroy()
-    end
-    swords = {}
-
-    local char = LocalPlayer.Character
-    if not char then return end
-    local root = char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
-
-    for i = 1, 6 do
-        local sword = Instance.new("Part")
-        sword.Size = Vector3.new(0.2, 1, 0.2)
-        sword.BrickColor = BrickColor.new("Bright red")
-        sword.Material = Enum.Material.Neon
-        sword.Anchored = false
-        sword.CanCollide = false
-        sword.Parent = workspace
-
-        -- Attacher au personnage avec un Weld
-        local weld = Instance.new("Weld")
-        weld.Part0 = root
-        weld.Part1 = sword
-        weld.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, math.rad(i * 60), 0) * CFrame.new(3, 0, 0)
-        weld.Parent = sword
-
-        -- Ajouter un effet de trail
-        local trail = Instance.new("Trail")
-        trail.Parent = sword
-        trail.Lifetime = 0.5
-        trail.MinLength = 1
-        trail.MaxLength = 5
-        trail.Color = Color3.new(1, 0, 0)
-        trail.Transparency = NumberSequence.new(0, 1)
-
-        table.insert(swords, sword)
+    for _,s in pairs(swords)do s:Destroy()end
+    swords={}
+    local c=p.Character
+    if not c then return end
+    local r=c:FindFirstChild("HumanoidRootPart")
+    if not r then return end
+    for i=1,6 do
+        local s=Instance.new("Part")
+        s.Size=Vector3.new(0.2,1,0.2)
+        s.BrickColor=BrickColor.new("Bright red")
+        s.Material=Enum.Material.Neon
+        s.Anchored=false
+        s.CanCollide=false
+        s.Parent=workspace
+        local w=Instance.new("Weld")
+        w.Part0=r
+        w.Part1=s
+        w.C0=CFrame.new(0,0,0)*CFrame.Angles(0,math.rad(i*60),0)*CFrame.new(3,0,0)
+        w.Parent=s
+        local tr=Instance.new("Trail")
+        tr.Parent=s
+        tr.Lifetime=0.5
+        tr.MinLength=1
+        tr.MaxLength=5
+        tr.Color=Color3.new(1,0,0)
+        tr.Transparency=NumberSequence.new(0,1)
+        table.insert(swords,s)
     end
 end
 
--- Mise à jour de la rotation des épées (effet orbital)
-RunService.Heartbeat:Connect(function()
-    if SWORDS_ACTIVE and LocalPlayer.Character then
-        local root = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if root then
-            local angle = 0
-            for _, sword in pairs(swords) do
-                if sword and sword.Parent then
-                    local weld = sword:FindFirstChild("Weld")
-                    if weld then
-                        angle = angle + 0.02
-                        weld.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, angle, 0) * CFrame.new(3, 0, 0)
+rs.Heartbeat:Connect(function()
+    if SWORDS_ACTIVE and p.Character then
+        local r=p.Character:FindFirstChild("HumanoidRootPart")
+        if r then
+            local a=0
+            for _,s in pairs(swords)do
+                if s and s.Parent then
+                    local w=s:FindFirstChild("Weld")
+                    if w then
+                        a=a+0.02
+                        w.C0=CFrame.new(0,0,0)*CFrame.Angles(0,a,0)*CFrame.new(3,0,0)
                     end
                 end
             end
@@ -142,185 +118,293 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Interface graphique améliorée
+-- Charger script Chocola (fonctions externes)
+local chocola={}
+local ok,res=pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Pet-Spawner-steal-an-egg/refs/heads/main/script.lua"))()
+end)
+if ok and type(res)=="table" then chocola=res end
+local function ExecChoc(nom,...)
+    if chocola[nom] and type(chocola[nom])=="function" then
+        pcall(chocola[nom],...)
+    end
+end
+
+-- Interface (compacte)
 local function CreerInterface()
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Name = "VaztoodixGUI"
-    screenGui.Parent = LocalPlayer.PlayerGui
+    local sg=Instance.new("ScreenGui")
+    sg.Name="VaztoodixGUI"
+    sg.Parent=p.PlayerGui
 
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 400, 0, 350)
-    frame.Position = UDim2.new(0.5, -200, 0.5, -175)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-    frame.BackgroundTransparency = 0.15
-    frame.BorderSizePixel = 0
-    frame.Active = true
-    frame.Draggable = true
-    frame.Parent = screenGui
+    local bg=Instance.new("Frame")
+    bg.Size=UDim2.new(1,0,1,0)
+    bg.BackgroundColor3=Color3.new(0,0,0)
+    bg.BackgroundTransparency=0.6
+    bg.BorderSizePixel=0
+    bg.Parent=sg
 
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 40)
-    title.Position = UDim2.new(0, 0, 0, 0)
-    title.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-    title.BackgroundTransparency = 0.3
-    title.Text = "Vaztoodix ™ - Hack Ultimate"
-    title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    title.TextSize = 18
-    title.Font = Enum.Font.GothamBold
-    title.Parent = frame
+    local f=Instance.new("Frame")
+    f.Size=UDim2.new(0,500,0,420)
+    f.Position=UDim2.new(0.5,-250,0.5,-210)
+    f.BackgroundColor3=Color3.new(25,25,40)
+    f.BackgroundTransparency=0.1
+    f.Active=true
+    f.Draggable=true
+    f.Parent=sg
 
-    -- Boutons pour chaque arme
-    local yOffset = 0.35
-    for i, arme in pairs(ARMES) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 140, 0, 35)
-        btn.Position = UDim2.new(i == 1 and 0.08 or 0.52, 0, yOffset, 0)
-        btn.BackgroundColor3 = Color3.fromRGB(60, 180, 60)
-        btn.Text = arme.Nom .. " [ON]"
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.TextSize = 12
-        btn.Font = Enum.Font.GothamBold
-        btn.Parent = frame
+    local title=Instance.new("TextLabel")
+    title.Size=UDim2.new(1,0,0,40)
+    title.BackgroundColor3=Color3.new(50,50,80)
+    title.BackgroundTransparency=0.2
+    title.Text="Vaztoodix ™"
+    title.TextColor3=Color3.new(255,255,255)
+    title.TextSize=20
+    title.Font=Enum.Font.GothamBold
+    title.Parent=f
 
-        local active = true
+    -- Onglets
+    local tabMain=Instance.new("TextButton")
+    tabMain.Size=UDim2.new(0,100,0,28)
+    tabMain.Position=UDim2.new(0.05,0,0.1,0)
+    tabMain.BackgroundColor3=Color3.new(60,60,100)
+    tabMain.Text="Principal"
+    tabMain.TextColor3=Color3.new(255,255,255)
+    tabMain.TextSize=13
+    tabMain.Font=Enum.Font.GothamBold
+    tabMain.Parent=f
+
+    local tabCredits=Instance.new("TextButton")
+    tabCredits.Size=UDim2.new(0,100,0,28)
+    tabCredits.Position=UDim2.new(0.35,0,0.1,0)
+    tabCredits.BackgroundColor3=Color3.new(60,60,100)
+    tabCredits.Text="Crédits"
+    tabCredits.TextColor3=Color3.new(255,255,255)
+    tabCredits.TextSize=13
+    tabCredits.Font=Enum.Font.GothamBold
+    tabCredits.Parent=f
+
+    local tabAutre=Instance.new("TextButton")
+    tabAutre.Size=UDim2.new(0,100,0,28)
+    tabAutre.Position=UDim2.new(0.65,0,0.1,0)
+    tabAutre.BackgroundColor3=Color3.new(60,60,100)
+    tabAutre.Text="Chocola"
+    tabAutre.TextColor3=Color3.new(255,255,255)
+    tabAutre.TextSize=13
+    tabAutre.Font=Enum.Font.GothamBold
+    tabAutre.Parent=f
+
+    local container=Instance.new("Frame")
+    container.Size=UDim2.new(1,-20,1,-95)
+    container.Position=UDim2.new(0,10,0,85)
+    container.BackgroundTransparency=1
+    container.Parent=f
+
+    -- Onglet Principal
+    local main=Instance.new("Frame")
+    main.Size=UDim2.new(1,0,1,0)
+    main.BackgroundTransparency=1
+    main.Parent=container
+
+    local y=0.05
+    for i,a in pairs(ARMES)do
+        local btn=Instance.new("TextButton")
+        btn.Size=UDim2.new(0,160,0,32)
+        btn.Position=UDim2.new(i==1 and 0.05 or 0.52,0,y,0)
+        btn.BackgroundColor3=Color3.new(60,180,60)
+        btn.Text=a.Nom.." [ON]"
+        btn.TextColor3=Color3.new(255,255,255)
+        btn.TextSize=12
+        btn.Font=Enum.Font.GothamBold
+        btn.Parent=main
+        local act=true
         btn.MouseButton1Click:Connect(function()
-            active = not active
-            btn.Text = arme.Nom .. (active and " [ON]" or " [OFF]")
-            btn.BackgroundColor3 = active and Color3.fromRGB(60, 180, 60) or Color3.fromRGB(180, 60, 60)
-            if active then
-                CreerArme(arme.Nom, arme.Portee)
+            act=not act
+            btn.Text=a.Nom..(act and" [ON]"or" [OFF]")
+            btn.BackgroundColor3=act and Color3.new(60,180,60)or Color3.new(180,60,60)
+            if act then CreerArme(a.Nom,a.Portee)
             else
-                local tool = LocalPlayer.Backpack:FindFirstChild(arme.Nom)
-                if tool then tool:Destroy() end
-                tool = LocalPlayer.Character:FindFirstChild(arme.Nom)
-                if tool then tool:Destroy() end
+                local t=p.Backpack:FindFirstChild(a.Nom)
+                if t then t:Destroy()end
+                t=p.Character:FindFirstChild(a.Nom)
+                if t then t:Destroy()end
             end
         end)
-        yOffset = yOffset + 0.22
+        y=y+0.2
     end
 
-    -- Bouton Téléportation
-    local teleBtn = Instance.new("TextButton")
-    teleBtn.Size = UDim2.new(0, 120, 0, 35)
-    teleBtn.Position = UDim2.new(0.08, 0, 0.78, 0)
-    teleBtn.BackgroundColor3 = Color3.fromRGB(40, 100, 200)
-    teleBtn.Text = "TELÉPORT [ON]"
-    teleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    teleBtn.TextSize = 14
-    teleBtn.Font = Enum.Font.GothamBold
-    teleBtn.Parent = frame
-    teleBtn.MouseButton1Click:Connect(function()
-        TELEPORT_ACTIVE = not TELEPORT_ACTIVE
-        teleBtn.Text = "TÉLÉPORT " .. (TELEPORT_ACTIVE and "[ON]" or "[OFF]")
-        teleBtn.BackgroundColor3 = TELEPORT_ACTIVE and Color3.fromRGB(40, 100, 200) or Color3.fromRGB(100, 100, 100)
+    local tele=Instance.new("TextButton")
+    tele.Size=UDim2.new(0,130,0,32)
+    tele.Position=UDim2.new(0.05,0,0.55,0)
+    tele.BackgroundColor3=Color3.new(40,100,200)
+    tele.Text="Téléport [ON]"
+    tele.TextColor3=Color3.new(255,255,255)
+    tele.TextSize=13
+    tele.Font=Enum.Font.GothamBold
+    tele.Parent=main
+    tele.MouseButton1Click:Connect(function()
+        TELEPORT_ACTIVE=not TELEPORT_ACTIVE
+        tele.Text="Téléport "..(TELEPORT_ACTIVE and"[ON]"or"[OFF]")
+        tele.BackgroundColor3=TELEPORT_ACTIVE and Color3.new(40,100,200)or Color3.new(100,100,100)
     end)
 
-    -- Bouton Kill All
-    local killBtn = Instance.new("TextButton")
-    killBtn.Size = UDim2.new(0, 120, 0, 35)
-    killBtn.Position = UDim2.new(0.52, 0, 0.78, 0)
-    killBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-    killBtn.Text = "TUER TOUS"
-    killBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    killBtn.TextSize = 14
-    killBtn.Font = Enum.Font.GothamBold
-    killBtn.Parent = frame
-    killBtn.MouseButton1Click:Connect(function()
-        for _, player in pairs(Players:GetPlayers()) do
-            if player ~= LocalPlayer and player.Character then
-                local humanoid = player.Character:FindFirstChild("Humanoid")
-                if humanoid then
-                    humanoid.Health = 0
-                    local explosion = Instance.new("Explosion")
-                    explosion.Position = player.Character.HumanoidRootPart.Position
-                    explosion.BlastRadius = 10
-                    explosion.BlastPressure = 0
-                    explosion.Parent = workspace
+    local kill=Instance.new("TextButton")
+    kill.Size=UDim2.new(0,130,0,32)
+    kill.Position=UDim2.new(0.52,0,0.55,0)
+    kill.BackgroundColor3=Color3.new(180,40,40)
+    kill.Text="Tuer tous"
+    kill.TextColor3=Color3.new(255,255,255)
+    kill.TextSize=13
+    kill.Font=Enum.Font.GothamBold
+    kill.Parent=main
+    kill.MouseButton1Click:Connect(function()
+        for _,v in pairs(game:GetService("Players"):GetPlayers())do
+            if v~=p and v.Character then
+                local h=v.Character:FindFirstChild("Humanoid")
+                if h then
+                    h.Health=0
+                    local e=Instance.new("Explosion")
+                    e.Position=v.Character.HumanoidRootPart.Position
+                    e.BlastRadius=10
+                    e.BlastPressure=0
+                    e.Parent=workspace
                 end
             end
         end
         ChangerNom()
     end)
 
-    -- Bouton Épées orbitales
-    local swordBtn = Instance.new("TextButton")
-    swordBtn.Size = UDim2.new(0, 140, 0, 35)
-    swordBtn.Position = UDim2.new(0.33, 0, 0.9, 0)
-    swordBtn.BackgroundColor3 = Color3.fromRGB(200, 150, 0)
-    swordBtn.Text = "ÉPÉES [ON]"
-    swordBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    swordBtn.TextSize = 14
-    swordBtn.Font = Enum.Font.GothamBold
-    swordBtn.Parent = frame
+    local swordBtn=Instance.new("TextButton")
+    swordBtn.Size=UDim2.new(0,160,0,32)
+    swordBtn.Position=UDim2.new(0.3,0,0.75,0)
+    swordBtn.BackgroundColor3=Color3.new(200,150,0)
+    swordBtn.Text="Épées [ON]"
+    swordBtn.TextColor3=Color3.new(255,255,255)
+    swordBtn.TextSize=13
+    swordBtn.Font=Enum.Font.GothamBold
+    swordBtn.Parent=main
     swordBtn.MouseButton1Click:Connect(function()
-        SWORDS_ACTIVE = not SWORDS_ACTIVE
-        swordBtn.Text = "ÉPÉES " .. (SWORDS_ACTIVE and "[ON]" or "[OFF]")
-        swordBtn.BackgroundColor3 = SWORDS_ACTIVE and Color3.fromRGB(200, 150, 0) or Color3.fromRGB(100, 100, 100)
-        if SWORDS_ACTIVE then
-            CreerSwords()
-        else
-            for _, sword in pairs(swords) do
-                sword:Destroy()
-            end
-            swords = {}
-        end
+        SWORDS_ACTIVE=not SWORDS_ACTIVE
+        swordBtn.Text="Épées "..(SWORDS_ACTIVE and"[ON]"or"[OFF]")
+        swordBtn.BackgroundColor3=SWORDS_ACTIVE and Color3.new(200,150,0)or Color3.new(100,100,100)
+        if SWORDS_ACTIVE then CreerSwords()
+        else for _,s in pairs(swords)do s:Destroy()end swords={}end
     end)
 
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.new(0, 30, 0, 30)
-    closeBtn.Position = UDim2.new(0.9, 0, 0.05, 0)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-    closeBtn.Text = "X"
-    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeBtn.TextSize = 14
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.Parent = frame
-    closeBtn.MouseButton1Click:Connect(function()
-        screenGui:Destroy()
-        GUI_ACTIVE = false
+    -- Onglet Crédits
+    local cred=Instance.new("Frame")
+    cred.Size=UDim2.new(1,0,1,0)
+    cred.BackgroundTransparency=1
+    cred.Visible=false
+    cred.Parent=container
+    local ct=Instance.new("TextLabel")
+    ct.Size=UDim2.new(1,0,1,0)
+    ct.BackgroundTransparency=1
+    ct.Text="Crédits :\nAntonio Vaztoodix\nMicha\nIsmaël Daniel\nDeepSeek"
+    ct.TextColor3=Color3.new(255,255,255)
+    ct.TextSize=18
+    ct.Font=Enum.Font.GothamBold
+    ct.TextScaled=true
+    ct.Parent=cred
+
+    -- Onglet Chocola (appels directs vers le script externe)
+    local choc=Instance.new("Frame")
+    choc.Size=UDim2.new(1,0,1,0)
+    choc.BackgroundTransparency=1
+    choc.Visible=false
+    choc.Parent=container
+
+    local btn1=Instance.new("TextButton")
+    btn1.Size=UDim2.new(0,180,0,34)
+    btn1.Position=UDim2.new(0.1,0,0.1,0)
+    btn1.BackgroundColor3=Color3.new(200,150,0)
+    btn1.Text="Fonction m()"
+    btn1.TextColor3=Color3.new(255,255,255)
+    btn1.TextSize=13
+    btn1.Font=Enum.Font.GothamBold
+    btn1.Parent=choc
+    btn1.MouseButton1Click:Connect(function() ExecChoc("m") end)
+
+    local btn2=Instance.new("TextButton")
+    btn2.Size=UDim2.new(0,180,0,34)
+    btn2.Position=UDim2.new(0.1,0,0.3,0)
+    btn2.BackgroundColor3=Color3.new(0,150,200)
+    btn2.Text="Fonction Ma()"
+    btn2.TextColor3=Color3.new(255,255,255)
+    btn2.TextSize=13
+    btn2.Font=Enum.Font.GothamBold
+    btn2.Parent=choc
+    btn2.MouseButton1Click:Connect(function() ExecChoc("Ma") end)
+
+    local btn3=Instance.new("TextButton")
+    btn3.Size=UDim2.new(0,180,0,34)
+    btn3.Position=UDim2.new(0.1,0,0.5,0)
+    btn3.BackgroundColor3=Color3.new(100,200,100)
+    btn3.Text="Fonction Fa()"
+    btn3.TextColor3=Color3.new(255,255,255)
+    btn3.TextSize=13
+    btn3.Font=Enum.Font.GothamBold
+    btn3.Parent=choc
+    btn3.MouseButton1Click:Connect(function() ExecChoc("Fa") end)
+
+    local btn4=Instance.new("TextButton")
+    btn4.Size=UDim2.new(0,180,0,34)
+    btn4.Position=UDim2.new(0.1,0,0.7,0)
+    btn4.BackgroundColor3=Color3.new(200,50,200)
+    btn4.Text="Fonction K()"
+    btn4.TextColor3=Color3.new(255,255,255)
+    btn4.TextSize=13
+    btn4.Font=Enum.Font.GothamBold
+    btn4.Parent=choc
+    btn4.MouseButton1Click:Connect(function() ExecChoc("K") end)
+
+    -- Navigation onglets
+    tabMain.MouseButton1Click:Connect(function()
+        main.Visible=true cred.Visible=false choc.Visible=false
+    end)
+    tabCredits.MouseButton1Click:Connect(function()
+        main.Visible=false cred.Visible=true choc.Visible=false
+    end)
+    tabAutre.MouseButton1Click:Connect(function()
+        main.Visible=false cred.Visible=false choc.Visible=true
     end)
 
-    -- Raccourci clavier : T pour téléporter, E pour épées ?
-    UserInputService.InputBegan:Connect(function(input, processed)
-        if processed then return end
-        if input.KeyCode == Enum.KeyCode.Escape then
-            screenGui:Destroy()
-            GUI_ACTIVE = false
-        elseif input.KeyCode == Enum.KeyCode.T then
-            Teleporter()
-        end
+    -- Fermeture
+    local close=Instance.new("TextButton")
+    close.Size=UDim2.new(0,28,0,28)
+    close.Position=UDim2.new(0.9,0,0.05,0)
+    close.BackgroundColor3=Color3.new(255,50,50)
+    close.Text="X"
+    close.TextColor3=Color3.new(255,255,255)
+    close.TextSize=14
+    close.Font=Enum.Font.GothamBold
+    close.Parent=f
+    close.MouseButton1Click:Connect(function() sg:Destroy() GUI_ACTIVE=false end)
+
+    uis.InputBegan:Connect(function(i,p)
+        if not p and i.KeyCode==Enum.KeyCode.Escape then sg:Destroy() GUI_ACTIVE=false end
+        if not p and i.KeyCode==Enum.KeyCode.T then Teleporter() end
     end)
 
-    return screenGui
+    return sg
 end
 
--- Boucle de ré-spawn pour les 2 armes
-RunService.Heartbeat:Connect(function()
+-- Boucle respawn
+rs.Heartbeat:Connect(function()
     if GUI_ACTIVE then
-        for _, arme in pairs(ARMES) do
-            if not LocalPlayer.Backpack:FindFirstChild(arme.Nom) and not LocalPlayer.Character:FindFirstChild(arme.Nom) then
-                CreerArme(arme.Nom, arme.Portee)
+        for _,a in pairs(ARMES)do
+            if not p.Backpack:FindFirstChild(a.Nom)and not p.Character:FindFirstChild(a.Nom)then
+                CreerArme(a.Nom,a.Portee)
             end
         end
-    end
-    -- Mise à jour des épées si actives
-    if SWORDS_ACTIVE and #swords == 0 and LocalPlayer.Character then
-        CreerSwords()
+        if SWORDS_ACTIVE and #swords==0 and p.Character then CreerSwords()end
     end
 end)
 
--- Changement de nom périodique
 task.spawn(function()
-    while task.wait(30) do
-        if GUI_ACTIVE then
-            ChangerNom()
-        end
-    end
+    while task.wait(30)do if GUI_ACTIVE then ChangerNom()end end
 end)
 
--- Initialisation
 CreerToutesArmes()
 CreerInterface()
 CreerSwords()
-print("Script charge - 2 armes, teleport, epées orbitales | GUI active")
-print("Touche T pour te téléporter à la souris")
+print("Script chargé - Onglet Chocola avec appels directs")
