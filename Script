@@ -1,843 +1,671 @@
--- Script Roblox Vaztoodix - Version Ultime (8 fonctionnalités supplémentaires)
+local P=game:GetService("Players").LocalPlayer
+local R=game:GetService("RunService")
+local U=game:GetService("UserInputService")
+local D=game:GetService("Debris")
+local G=true
+local W=true
+local T=true
+local A=false
+local H=false
+local V=false
+local Q=false
+local K=false
+local C=false
+local N=false
+local s={}
+local o={}
+local c=nil
+local h={}
+local M={}
+local m=false
+local X=nil
+local Y=nil
+local Z=nil
 
-local p = game:GetService("Players").LocalPlayer
-local rs = game:GetService("RunService")
-local uis = game:GetService("UserInputService")
-local debris = game:GetService("Debris")
+local function n()P.DisplayName=({"Alpha_99","Beta_X","Gamma_7","Delta_Zero","Echo_4"})[math.random(1,5)]..math.random(100,999)end
 
--- Variables de contrôle
-local GUI_ACTIVE = true
-local SWORDS_ACTIVE = true
-local TELEPORT_ACTIVE = true
-local AIMBOT_ACTIVE = false
-local WALLHACK_ACTIVE = false
-local STEAL_VEHICLE_ACTIVE = false
-local PARTICLES_ACTIVE = false
-local ANTI_AFK_ACTIVE = false
-local CLONE_ACTIVE = false
-local NOCLIP_ACTIVE = false
+local function e(t,u,f)
+local H=Instance.new("Part")
+H.Name="Handle"
+H.Size=Vector3.new(1.2,0.3,2.2)
+H.BrickColor=BrickColor.new(u or "Bright red")
+H.Material=Enum.Material.Neon
+H.Anchored=false
+H.CanCollide=false
+H.Parent=t
+local l=Instance.new("PointLight")
+l.Parent=H
+l.Range=10
+l.Brightness=4
+l.Color=H.BrickColor.Color
+if f=="spiral"then for i=1,4 do
+local r=Instance.new("Part")
+r.Size=Vector3.new(0.8+i*0.15,0.08,0.8+i*0.15)
+r.Shape=Enum.PartType.Cylinder
+r.BrickColor=BrickColor.new(u or "Bright red")
+r.Material=Enum.Material.Neon
+r.Anchored=false
+r.CanCollide=false
+r.Parent=t
+local w=Instance.new("Weld")
+w.Part0=H
+w.Part1=r
+w.C0=CFrame.new(0,i*0.3-0.45,0)*CFrame.Angles(0,math.rad(i*30),math.rad(i*15))
+w.Parent=r
+end elseif f=="double"then for _,o in pairs({{-0.6,0,0},{0.6,0,0}})do
+local b=Instance.new("Part")
+b.Size=Vector3.new(0.15,1.8,0.15)
+b.BrickColor=BrickColor.new("Bright blue")
+b.Material=Enum.Material.Neon
+b.Anchored=false
+b.CanCollide=false
+b.Parent=t
+local w=Instance.new("Weld")
+w.Part0=H
+w.Part1=b
+w.C0=CFrame.new(o[1],o[2]+0.6,o[3])*CFrame.Angles(0,0,math.rad(20))
+w.Parent=b
+end end
+return H end
 
-local swords = {}
-local particles = {}
-local clone = nil
-local wallhackObjects = {}
-local chocola = {}
-local mirandaLoaded = false
+local function a()
+local t=Instance.new("Tool")
+t.Name="istadyxx26"
+t.CanBeDropped=false
+t.Parent=P.Backpack
+local H=e(t,"Bright violet","double")
+t.Handle=H
+t.RequiresHandle=true
+R.RenderStepped:Connect(function()if t.Parent==P.Backpack or t.Parent==P.Character then if t.Handle then t.Handle.CFrame=t.Handle.CFrame*CFrame.Angles(0,0.02,0.02)end end end)
+t.Activated:Connect(function()
+local m=P:GetMouse()
+if not m then return end
+local p=m.Hit.Position
+for _,v in pairs(game:GetService("Players"):GetPlayers())do
+if v~=P and v.Character then
+local H=v.Character:FindFirstChild("Humanoid")
+if H and v.Character:FindFirstChild("HumanoidRootPart")and(v.Character.HumanoidRootPart.Position-p).Magnitude<=600 then
+H.Health=0
+local r=v.Character:FindFirstChild("HumanoidRootPart")
+if r then for i=1,10 do local e=Instance.new("Explosion")e.Position=r.Position+Vector3.new(math.random(-8,8),math.random(-2,5),math.random(-8,8))e.BlastRadius=7 e.BlastPressure=0 e.ExplosionType=Enum.ExplosionType.NoCraters e.Parent=workspace end
+for i=1,20 do local p=Instance.new("Part")p.Size=Vector3.new(0.4,0.4,0.4)p.BrickColor=BrickColor.random()p.Material=Enum.Material.Neon p.Anchored=true p.CanCollide=false p.Position=r.Position+Vector3.new(math.random(-5,5),math.random(0,5),math.random(-5,5))p.Parent=workspace D:AddItem(p,1.5)end
+pcall(function()local c=workspace.CurrentCamera local o=c.CFrame for i=1,10 do c.CFrame=c.CFrame*CFrame.Angles(math.rad(math.random(-4,4)),math.rad(math.random(-4,4)),0)task.wait(0.015)end c.CFrame=o end)end
+n()end end end end)
+return t end
 
--- Fonction de changement de nom (inchangée)
-local function ChangerNom()
-    local noms = {"Alpha_99", "Beta_X", "Gamma_7", "Delta_Zero", "Echo_4"}
-    p.DisplayName = noms[math.random(1, #noms)] .. tostring(math.random(100, 999))
+local function i(n,p,c,f)
+local t=Instance.new("Tool")
+t.Name=n
+t.CanBeDropped=false
+t.Parent=P.Backpack
+local H=e(t,c,f)
+t.Handle=H
+t.RequiresHandle=true
+R.RenderStepped:Connect(function()if t.Parent==P.Backpack or t.Parent==P.Character then if t.Handle then t.Handle.CFrame=t.Handle.CFrame*CFrame.Angles(0,0.015,0)end end end)
+t.Activated:Connect(function()
+local m=P:GetMouse()
+if not m then return end
+local o=m.Hit.Position
+for _,v in pairs(game:GetService("Players"):GetPlayers())do
+if v~=P and v.Character then
+local H=v.Character:FindFirstChild("Humanoid")
+if H and v.Character:FindFirstChild("HumanoidRootPart")and(v.Character.HumanoidRootPart.Position-o).Magnitude<=p then
+H.Health=0
+n()end end end end)
+return t end
+
+local function l()
+for _,a in pairs({{Nom="zizi Tranchant",Portee=500,Couleur="Bright red",Forme="spiral"},{Nom="Micha Minivichi",Portee=600,Couleur="Bright blue",Forme="double"},{Nom="istadyxx26",Portee=600,Special=true}})do
+if not P.Backpack:FindFirstChild(a.Nom)and not P.Character:FindFirstChild(a.Nom)then
+if a.Special then a()else i(a.Nom,a.Portee,a.Couleur,a.Forme)end end end
 end
 
--- === ARMES 3D (inchangées) ===
-local function CreerModeleArme(tool, couleur, forme)
-    local handle = Instance.new("Part")
-    handle.Name = "Handle"
-    handle.Size = Vector3.new(1.2, 0.3, 2.2)
-    handle.BrickColor = BrickColor.new(couleur or "Bright red")
-    handle.Material = Enum.Material.Neon
-    handle.Anchored = false
-    handle.CanCollide = false
-    handle.Parent = tool
-
-    local light = Instance.new("PointLight")
-    light.Parent = handle
-    light.Range = 10
-    light.Brightness = 4
-    light.Color = handle.BrickColor.Color
-
-    if forme == "spiral" then
-        for i = 1, 4 do
-            local ring = Instance.new("Part")
-            ring.Size = Vector3.new(0.8 + i * 0.15, 0.08, 0.8 + i * 0.15)
-            ring.Shape = Enum.PartType.Cylinder
-            ring.BrickColor = BrickColor.new(couleur or "Bright red")
-            ring.Material = Enum.Material.Neon
-            ring.Anchored = false
-            ring.CanCollide = false
-            ring.Parent = tool
-            local w = Instance.new("Weld")
-            w.Part0 = handle
-            w.Part1 = ring
-            w.C0 = CFrame.new(0, i * 0.3 - 0.45, 0) * CFrame.Angles(0, math.rad(i * 30), math.rad(i * 15))
-            w.Parent = ring
-        end
-    elseif forme == "double" then
-        for _, off in pairs({{-0.6, 0, 0}, {0.6, 0, 0}}) do
-            local blade = Instance.new("Part")
-            blade.Size = Vector3.new(0.15, 1.8, 0.15)
-            blade.BrickColor = BrickColor.new("Bright blue")
-            blade.Material = Enum.Material.Neon
-            blade.Anchored = false
-            blade.CanCollide = false
-            blade.Parent = tool
-            local w = Instance.new("Weld")
-            w.Part0 = handle
-            w.Part1 = blade
-            w.C0 = CFrame.new(off[1], off[2] + 0.6, off[3]) * CFrame.Angles(0, 0, math.rad(20))
-            w.Parent = blade
-        end
-    end
-    return handle
+local function d()
+if not T then return end
+local m=P:GetMouse()
+if not m then return end
+local c=P.Character
+if c and c:FindFirstChild("HumanoidRootPart")then c:SetPrimaryPartCFrame(CFrame.new(m.Hit.Position))end
 end
 
-local function CreerArmeSpecial()
-    local t = Instance.new("Tool")
-    t.Name = "istadyxx26"
-    t.CanBeDropped = false
-    t.Parent = p.Backpack
-    local handle = CreerModeleArme(t, "Bright violet", "double")
-    t.Handle = handle
-    t.RequiresHandle = true
-    rs.RenderStepped:Connect(function()
-        if t.Parent == p.Backpack or t.Parent == p.Character then
-            if t.Handle then t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.02, 0.02) end
-        end
-    end)
-    t.Activated:Connect(function()
-        local m = p:GetMouse()
-        if not m then return end
-        local pos = m.Hit.Position
-        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-            if v ~= p and v.Character then
-                local h = v.Character:FindFirstChild("Humanoid")
-                if h and v.Character:FindFirstChild("HumanoidRootPart") then
-                    if (v.Character.HumanoidRootPart.Position - pos).Magnitude <= 600 then
-                        h.Health = 0
-                        local hrp = v.Character:FindFirstChild("HumanoidRootPart")
-                        if hrp then
-                            for i = 1, 10 do
-                                local e = Instance.new("Explosion")
-                                e.Position = hrp.Position + Vector3.new(math.random(-8,8), math.random(-2,5), math.random(-8,8))
-                                e.BlastRadius = 7
-                                e.BlastPressure = 0
-                                e.ExplosionType = Enum.ExplosionType.NoCraters
-                                e.Parent = workspace
-                            end
-                            for i = 1, 20 do
-                                local part = Instance.new("Part")
-                                part.Size = Vector3.new(0.4, 0.4, 0.4)
-                                part.BrickColor = BrickColor.random()
-                                part.Material = Enum.Material.Neon
-                                part.Anchored = true
-                                part.CanCollide = false
-                                part.Position = hrp.Position + Vector3.new(math.random(-5,5), math.random(0,5), math.random(-5,5))
-                                part.Parent = workspace
-                                debris:AddItem(part, 1.5)
-                            end
-                            pcall(function()
-                                local cam = workspace.CurrentCamera
-                                local orig = cam.CFrame
-                                for i = 1, 10 do
-                                    cam.CFrame = cam.CFrame * CFrame.Angles(math.rad(math.random(-4,4)), math.rad(math.random(-4,4)), 0)
-                                    task.wait(0.015)
-                                end
-                                cam.CFrame = orig
-                            end)
-                        end
-                        ChangerNom()
-                    end
-                end
-            end
-        end
-    end)
-    return t
+local function b()
+if not W then return end
+for _,v in pairs(s)do v:Destroy()end
+s={}
+local c=P.Character
+if not c then return end
+local r=c:FindFirstChild("HumanoidRootPart")
+if not r then return end
+for i=1,6 do
+local v=Instance.new("Part")
+v.Size=Vector3.new(0.2,1,0.2)
+v.BrickColor=BrickColor.new("Bright red")
+v.Material=Enum.Material.Neon
+v.Anchored=false
+v.CanCollide=false
+v.Parent=workspace
+local w=Instance.new("Weld")
+w.Part0=r
+w.Part1=v
+w.C0=CFrame.new(0,0,0)*CFrame.Angles(0,math.rad(i*60),0)*CFrame.new(3,0,0)
+w.Parent=v
+local tr=Instance.new("Trail")
+tr.Parent=v
+tr.Lifetime=0.5
+tr.MinLength=1
+tr.MaxLength=5
+tr.Color=Color3.new(1,0,0)
+tr.Transparency=NumberSequence.new(0,1)
+table.insert(s,v)
+end
 end
 
-local function CreerArme(nom, portee, couleur, forme)
-    local t = Instance.new("Tool")
-    t.Name = nom
-    t.CanBeDropped = false
-    t.Parent = p.Backpack
-    local handle = CreerModeleArme(t, couleur, forme)
-    t.Handle = handle
-    t.RequiresHandle = true
-    rs.RenderStepped:Connect(function()
-        if t.Parent == p.Backpack or t.Parent == p.Character then
-            if t.Handle then t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.015, 0) end
-        end
-    end)
-    t.Activated:Connect(function()
-        local m = p:GetMouse()
-        if not m then return end
-        local pos = m.Hit.Position
-        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-            if v ~= p and v.Character then
-                local h = v.Character:FindFirstChild("Humanoid")
-                if h and v.Character:FindFirstChild("HumanoidRootPart") then
-                    if (v.Character.HumanoidRootPart.Position - pos).Magnitude <= portee then
-                        h.Health = 0
-                        ChangerNom()
-                    end
-                end
-            end
-        end
-    end)
-    return t
+R.Heartbeat:Connect(function()
+if W and P.Character then
+local r=P.Character:FindFirstChild("HumanoidRootPart")
+if r then
+local a=0
+for _,v in pairs(s)do
+local w=v:FindFirstChild("Weld")
+if w then a=a+0.02 w.C0=CFrame.new(0,0,0)*CFrame.Angles(0,a,0)*CFrame.new(3,0,0)end
 end
-
-local function CreerToutesArmes()
-    local list = {
-        {Nom = "zizi Tranchant", Portee = 500, Couleur = "Bright red", Forme = "spiral"},
-        {Nom = "Micha Minivichi", Portee = 600, Couleur = "Bright blue", Forme = "double"},
-        {Nom = "istadyxx26", Portee = 600, Special = true}
-    }
-    for _, a in pairs(list) do
-        if not p.Backpack:FindFirstChild(a.Nom) and not p.Character:FindFirstChild(a.Nom) then
-            if a.Special then CreerArmeSpecial() else CreerArme(a.Nom, a.Portee, a.Couleur, a.Forme) end
-        end
-    end
 end
-
--- === FONCTIONS EXISTANTES ===
-local function Teleporter()
-    if not TELEPORT_ACTIVE then return end
-    local m = p:GetMouse()
-    if not m then return end
-    local c = p.Character
-    if c and c:FindFirstChild("HumanoidRootPart") then
-        c:SetPrimaryPartCFrame(CFrame.new(m.Hit.Position))
-    end
 end
-
-local function CreerSwords()
-    if not SWORDS_ACTIVE then return end
-    for _, s in pairs(swords) do s:Destroy() end
-    swords = {}
-    local c = p.Character
-    if not c then return end
-    local r = c:FindFirstChild("HumanoidRootPart")
-    if not r then return end
-    for i = 1, 6 do
-        local s = Instance.new("Part")
-        s.Size = Vector3.new(0.2, 1, 0.2)
-        s.BrickColor = BrickColor.new("Bright red")
-        s.Material = Enum.Material.Neon
-        s.Anchored = false
-        s.CanCollide = false
-        s.Parent = workspace
-        local w = Instance.new("Weld")
-        w.Part0 = r
-        w.Part1 = s
-        w.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, math.rad(i * 60), 0) * CFrame.new(3, 0, 0)
-        w.Parent = s
-        local tr = Instance.new("Trail")
-        tr.Parent = s
-        tr.Lifetime = 0.5
-        tr.MinLength = 1
-        tr.MaxLength = 5
-        tr.Color = Color3.new(1, 0, 0)
-        tr.Transparency = NumberSequence.new(0, 1)
-        table.insert(swords, s)
-    end
-end
-
-rs.Heartbeat:Connect(function()
-    if SWORDS_ACTIVE and p.Character then
-        local r = p.Character:FindFirstChild("HumanoidRootPart")
-        if r then
-            local ang = 0
-            for _, s in pairs(swords) do
-                local w = s:FindFirstChild("Weld")
-                if w then
-                    ang = ang + 0.02
-                    w.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, ang, 0) * CFrame.new(3, 0, 0)
-                end
-            end
-        end
-    end
 end)
 
--- === NOUVELLES FONCTIONNALITÉS ===
-
--- 1. Aimbot
-local function AimbotLoop()
-    if not AIMBOT_ACTIVE or not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
-    local target, dist = nil, math.huge
-    for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-        if v ~= p and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-            local d = (v.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-            if d < dist then target, dist = v, d end
-        end
-    end
-    if target then
-        local hrp = target.Character.HumanoidRootPart
-        p.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position, hrp.Position)
-    end
+local function Aimbot()
+if not A or not P.Character or not P.Character:FindFirstChild("HumanoidRootPart")then return end
+local t,d=nil,math.huge
+for _,v in pairs(game:GetService("Players"):GetPlayers())do
+if v~=P and v.Character and v.Character:FindFirstChild("HumanoidRootPart")then
+local o=(v.Character.HumanoidRootPart.Position-P.Character.HumanoidRootPart.Position).Magnitude
+if o<d then t,d=v,o end
+end
+end
+if t then
+local r=t.Character.HumanoidRootPart
+P.Character.HumanoidRootPart.CFrame=CFrame.new(P.Character.HumanoidRootPart.Position,r.Position)
+end
 end
 
--- 2. Wallhack / ESP
-local function UpdateWallhack()
-    for _, obj in pairs(wallhackObjects) do obj:Destroy() end
-    wallhackObjects = {}
-    if not WALLHACK_ACTIVE then return end
-    for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-        if v ~= p and v.Character then
-            local hrp = v.Character:FindFirstChild("HumanoidRootPart")
-            if hrp then
-                local box = Instance.new("BoxHandleAdornment")
-                box.Size = Vector3.new(3, 5, 3)
-                box.Color3 = Color3.new(1, 0, 0)
-                box.AlwaysOnTop = true
-                box.ZIndex = 10
-                box.Adornee = hrp
-                box.Parent = hrp
-                table.insert(wallhackObjects, box)
-                local line = Instance.new("LineHandleAdornment")
-                line.Length = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
-                line.Color3 = Color3.new(0, 1, 0)
-                line.AlwaysOnTop = true
-                line.Thickness = 2
-                line.Adornee = hrp
-                line.Parent = hrp
-                table.insert(wallhackObjects, line)
-            end
-        end
-    end
+local function Wallhack()
+for _,v in pairs(h)do v:Destroy()end
+h={}
+if not H then return end
+for _,v in pairs(game:GetService("Players"):GetPlayers())do
+if v~=P and v.Character then
+local r=v.Character:FindFirstChild("HumanoidRootPart")
+if r then
+local b=Instance.new("BoxHandleAdornment")
+b.Size=Vector3.new(3,5,3)
+b.Color3=Color3.new(1,0,0)
+b.AlwaysOnTop=true
+b.ZIndex=10
+b.Adornee=r
+b.Parent=r
+table.insert(h,b)
+local l=Instance.new("LineHandleAdornment")
+l.Length=(r.Position-P.Character.HumanoidRootPart.Position).Magnitude
+l.Color3=Color3.new(0,1,0)
+l.AlwaysOnTop=true
+l.Thickness=2
+l.Adornee=r
+l.Parent=r
+table.insert(h,l)
+end
+end
+end
 end
 
--- 3. Vol de véhicule
-local function StealVehicle()
-    if not STEAL_VEHICLE_ACTIVE then return end
-    local vehicle = nil
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v:IsA("VehicleSeat") and v.Occupant == nil then
-            vehicle = v.Parent
-            break
-        end
-    end
-    if vehicle and vehicle:FindFirstChildOfClass("BasePart") then
-        p.Character.HumanoidRootPart.CFrame = vehicle.PrimaryPart.CFrame
-        p.Character.HumanoidRootPart.Parent = vehicle
-    end
+local function Steal()
+if not V then return end
+local vh=nil
+for _,v in pairs(workspace:GetDescendants())do
+if v:IsA("VehicleSeat")and v.Occupant==nil then vh=v.Parent break end
+end
+if vh and vh:FindFirstChildOfClass("BasePart")then
+P.Character.HumanoidRootPart.CFrame=vh.PrimaryPart.CFrame
+P.Character.HumanoidRootPart.Parent=vh
+end
 end
 
--- 4. Particules décoratives
-local function ToggleParticles()
-    if PARTICLES_ACTIVE then
-        for _, part in pairs(particles) do part:Destroy() end
-        particles = {}
-        return
-    end
-    for _, part in pairs(particles) do part:Destroy() end
-    particles = {}
-    if not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
-    for i = 1, 30 do
-        local part = Instance.new("Part")
-        part.Size = Vector3.new(0.2, 0.2, 0.2)
-        part.BrickColor = BrickColor.random()
-        part.Material = Enum.Material.Neon
-        part.Anchored = false
-        part.CanCollide = false
-        part.Parent = workspace
-        local weld = Instance.new("Weld")
-        weld.Part0 = p.Character.HumanoidRootPart
-        weld.Part1 = part
-        weld.C0 = CFrame.new(0,0,0) * CFrame.Angles(math.rad(math.random(0,360)), math.rad(math.random(0,360)), 0) * CFrame.new(2, math.random(-1,1), 2)
-        weld.Parent = part
-        table.insert(particles, part)
-    end
+local function ToggleP()
+if Q then for _,v in pairs(o)do v:Destroy()end o={}return end
+for _,v in pairs(o)do v:Destroy()end o={}
+if not P.Character or not P.Character:FindFirstChild("HumanoidRootPart")then return end
+for i=1,30 do
+local p=Instance.new("Part")
+p.Size=Vector3.new(0.2,0.2,0.2)
+p.BrickColor=BrickColor.random()
+p.Material=Enum.Material.Neon
+p.Anchored=false
+p.CanCollide=false
+p.Parent=workspace
+local w=Instance.new("Weld")
+w.Part0=P.Character.HumanoidRootPart
+w.Part1=p
+w.C0=CFrame.new(0,0,0)*CFrame.Angles(math.rad(math.random(0,360)),math.rad(math.random(0,360)),0)*CFrame.new(2,math.random(-1,1),2)
+w.Parent=p
+table.insert(o,p)
+end
 end
 
--- 5. Anti-AFK
-local antiAFK_conn = nil
-local function ToggleAntiAFK()
-    if ANTI_AFK_ACTIVE then
-        if antiAFK_conn then antiAFK_conn:Disconnect() end
-        return
-    end
-    antiAFK_conn = game:GetService("RunService").Stepped:Connect(function()
-        if p.Character and p.Character:FindFirstChild("Humanoid") then
-            local h = p.Character.Humanoid
-            h.MoveTo(h.RootPart.Position + Vector3.new(0, 0, 0.1))
-        end
-    end)
+local afkConn=nil
+local function ToggleAFK()
+if K then if afkConn then afkConn:Disconnect()end return end
+afkConn=R.Stepped:Connect(function()
+if P.Character and P.Character:FindFirstChild("Humanoid")then
+local h=P.Character.Humanoid
+h.MoveTo(h.RootPart.Position+Vector3.new(0,0,0.1))
+end
+end)
 end
 
--- 6. Clone / Double
 local function ToggleClone()
-    if CLONE_ACTIVE then
-        if clone then clone:Destroy() end
-        clone = nil
-        return
-    end
-    if not p.Character then return end
-    clone = p.Character:Clone()
-    clone.Parent = workspace
-    clone.Name = "Clone"
-    local humanoid = clone:FindFirstChild("Humanoid")
-    if humanoid then
-        humanoid.WalkSpeed = 20
-        humanoid.JumpPower = 50
-    end
-    task.spawn(function()
-        while clone and clone.Parent do
-            local target = nil
-            for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-                if v ~= p and v.Character then
-                    target = v.Character
-                    break
-                end
-            end
-            if target and target:FindFirstChild("HumanoidRootPart") then
-                clone.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-                if (clone.HumanoidRootPart.Position - target.HumanoidRootPart.Position).Magnitude < 5 then
-                    local h = target:FindFirstChild("Humanoid")
-                    if h then h.Health = 0 end
-                end
-            end
-            task.wait(0.5)
-        end
-    end)
-end
-
--- 7. Noclip
-local function ToggleNoclip()
-    NOCLIP_ACTIVE = not NOCLIP_ACTIVE
-    if p.Character then
-        for _, part in pairs(p.Character:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = not NOCLIP_ACTIVE
-            end
-        end
-    end
-end
-
--- 8. Admin Menu : affiché dans un onglet séparé
-local function CreateAdminPanel(parent)
-    -- parent est le Frame de l'onglet Admin
-    local scroll = Instance.new("ScrollingFrame")
-    scroll.Size = UDim2.new(1, 0, 1, 0)
-    scroll.BackgroundTransparency = 1
-    scroll.BorderSizePixel = 0
-    scroll.ScrollBarThickness = 8
-    scroll.Parent = parent
-
-    local y = 0
-    local function RefreshAdmin()
-        for _, child in pairs(scroll:GetChildren()) do child:Destroy() end
-        y = 0
-        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-            if v ~= p then
-                local btn = Instance.new("TextButton")
-                btn.Size = UDim2.new(0, 220, 0, 35)
-                btn.Position = UDim2.new(0.5, -110, 0, y)
-                btn.BackgroundColor3 = Color3.new(0.15, 0.2, 0.4)
-                btn.Text = v.Name
-                btn.TextColor3 = Color3.new(1, 1, 1)
-                btn.TextSize = 14
-                btn.Font = Enum.Font.GothamBold
-                btn.Parent = scroll
-                -- Menu contextuel : clic droit ou maintien
-                btn.MouseButton1Click:Connect(function()
-                    -- Téléporter à ce joueur
-                    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
-                        p.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
-                    end
-                end)
-                btn.MouseButton2Click:Connect(function()
-                    -- Tuer ce joueur
-                    if v.Character then
-                        local h = v.Character:FindFirstChild("Humanoid")
-                        if h then h.Health = 0 end
-                    end
-                end)
-                -- Ajouter un petit texte d'info
-                local info = Instance.new("TextLabel")
-                info.Size = UDim2.new(0, 100, 0, 20)
-                info.Position = UDim2.new(0.5, 130, 0, y + 8)
-                info.BackgroundTransparency = 1
-                info.Text = "Click = TP | Right = Kill"
-                info.TextColor3 = Color3.new(0.6, 0.6, 0.6)
-                info.TextSize = 10
-                info.Font = Enum.Font.Gotham
-                info.Parent = scroll
-                y = y + 45
-            end
-        end
-        scroll.CanvasSize = UDim2.new(0, 0, 0, y + 20)
-    end
-    RefreshAdmin()
-    -- Rafraîchir toutes les 5 secondes
-    task.spawn(function()
-        while GUI_ACTIVE do
-            task.wait(5)
-            RefreshAdmin()
-        end
-    end)
-end
-
--- === INTERFACE ===
-local function CreerInterface()
-    for _, gui in pairs(p.PlayerGui:GetChildren()) do
-        if gui.Name == "VaztoodixHub" then gui:Destroy() end
-    end
-
-    local sg = Instance.new("ScreenGui")
-    sg.Name = "VaztoodixHub"
-    sg.ResetOnSpawn = false
-    sg.Parent = p.PlayerGui
-    sg.Enabled = true
-
-    local bg = Instance.new("Frame")
-    bg.Size = UDim2.new(1, 0, 1, 0)
-    bg.BackgroundColor3 = Color3.new(0, 0, 0)
-    bg.BackgroundTransparency = 0.4
-    bg.BorderSizePixel = 0
-    bg.Parent = sg
-
-    local win = Instance.new("Frame")
-    win.Size = UDim2.new(0, 600, 0, 520)
-    win.Position = UDim2.new(0.5, -300, 0.5, -260)
-    win.BackgroundColor3 = Color3.new(0.05, 0.05, 0.2)
-    win.BackgroundTransparency = 0.05
-    win.BorderSizePixel = 1
-    win.BorderColor3 = Color3.new(0.2, 0.4, 0.8)
-    win.Active = true
-    win.Draggable = true
-    win.Parent = sg
-
-    local title = Instance.new("TextLabel")
-    title.Size = UDim2.new(1, 0, 0, 50)
-    title.Position = UDim2.new(0, 0, 0, 0)
-    title.BackgroundColor3 = Color3.new(0.1, 0.2, 0.5)
-    title.BackgroundTransparency = 0.2
-    title.Text = "VAZTOODIX ™ ULTIMATE"
-    title.TextColor3 = Color3.new(0.6, 0.8, 1)
-    title.TextSize = 26
-    title.Font = Enum.Font.GothamBold
-    title.Parent = win
-
-    local close = Instance.new("TextButton")
-    close.Size = UDim2.new(0, 30, 0, 30)
-    close.Position = UDim2.new(0.94, 0, 0.02, 0)
-    close.BackgroundColor3 = Color3.new(0.6, 0.1, 0.1)
-    close.Text = "X"
-    close.TextColor3 = Color3.new(1, 1, 1)
-    close.TextSize = 16
-    close.Font = Enum.Font.GothamBold
-    close.Parent = win
-    close.MouseButton1Click:Connect(function() sg:Destroy() GUI_ACTIVE = false end)
-
-    -- Onglets (5 maintenant)
-    local tabs = Instance.new("Frame")
-    tabs.Size = UDim2.new(1, -20, 0, 40)
-    tabs.Position = UDim2.new(0, 10, 0, 55)
-    tabs.BackgroundTransparency = 1
-    tabs.Parent = win
-
-    local tabNames = {"Principale", "Admin", "Crédits", "Chocola", "Miranda"}
-    local tabBtns = {}
-    local panels = {}
-
-    for i, name in pairs(tabNames) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 110, 0, 32)
-        btn.Position = UDim2.new(0, (i-1) * 115, 0, 0)
-        btn.BackgroundColor3 = Color3.new(0.15, 0.25, 0.5)
-        btn.Text = name
-        btn.TextColor3 = Color3.new(0.8, 0.9, 1)
-        btn.TextSize = 14
-        btn.Font = Enum.Font.GothamBold
-        btn.Parent = tabs
-        tabBtns[i] = btn
-
-        local panel = Instance.new("Frame")
-        panel.Size = UDim2.new(1, -20, 1, -100)
-        panel.Position = UDim2.new(0, 10, 0, 100)
-        panel.BackgroundTransparency = 1
-        panel.Visible = (i == 1)
-        panel.Parent = win
-        panels[i] = panel
-
-        btn.MouseButton1Click:Connect(function()
-            for j, pnl in pairs(panels) do
-                pnl.Visible = (j == i)
-            end
-            for j, b in pairs(tabBtns) do
-                b.BackgroundColor3 = (j == i) and Color3.new(0.2, 0.4, 0.8) or Color3.new(0.15, 0.25, 0.5)
-            end
-        end)
-    end
-
-    -- Panel Principal (ScrollingFrame)
-    local p1 = panels[1]
-    local scroll = Instance.new("ScrollingFrame")
-    scroll.Size = UDim2.new(1, 0, 1, 0)
-    scroll.Position = UDim2.new(0, 0, 0, 0)
-    scroll.BackgroundTransparency = 1
-    scroll.BorderSizePixel = 0
-    scroll.ScrollBarThickness = 8
-    scroll.ScrollBarImageColor3 = Color3.new(0.3, 0.6, 1)
-    scroll.CanvasSize = UDim2.new(0, 0, 0, 800)
-    scroll.Parent = p1
-
-    local yOff = 10
-    local function AddButton(text, yPos, color, callback)
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 240, 0, 38)
-        btn.Position = UDim2.new(0.5, -120, 0, yPos)
-        btn.BackgroundColor3 = color or Color3.new(0.2, 0.3, 0.6)
-        btn.Text = text
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.TextSize = 14
-        btn.Font = Enum.Font.GothamBold
-        btn.Parent = scroll
-        btn.MouseButton1Click:Connect(callback)
-        return btn
-    end
-
-    -- Armes
-    local armesData = {
-        {nom = "zizi Tranchant", portee = 500, couleur = Color3.new(0.2, 0.8, 0.2)},
-        {nom = "Micha Minivichi", portee = 600, couleur = Color3.new(0.2, 0.5, 0.9)},
-        {nom = "istadyxx26 ★", portee = 600, couleur = Color3.new(0.7, 0.2, 0.9), special = true}
-    }
-    for _, data in pairs(armesData) do
-        local btn = AddButton(data.nom .. " [ON]", yOff, data.couleur, function()
-            local act = (btn.Text:find("[ON]") ~= nil)
-            act = not act
-            btn.Text = data.nom .. (act and " [ON]" or " [OFF]")
-            btn.BackgroundColor3 = act and data.couleur or Color3.new(0.5, 0.1, 0.1)
-            local nomReel = string.gsub(data.nom, " ★", "")
-            if act then
-                if data.special then
-                    CreerArmeSpecial()
-                else
-                    local couleur = (nomReel == "zizi Tranchant") and "Bright red" or "Bright blue"
-                    local forme = (nomReel == "zizi Tranchant") and "spiral" or "double"
-                    CreerArme(nomReel, data.portee, couleur, forme)
-                end
-            else
-                local t = p.Backpack:FindFirstChild(nomReel)
-                if t then t:Destroy() end
-                t = p.Character:FindFirstChild(nomReel)
-                if t then t:Destroy() end
-            end
-        end)
-        yOff = yOff + 48
-    end
-
-    -- Téléport
-    local teleBtn = AddButton("Téléport [ON]", yOff, Color3.new(0.1, 0.4, 0.8), function()
-        TELEPORT_ACTIVE = not TELEPORT_ACTIVE
-        teleBtn.Text = "Téléport " .. (TELEPORT_ACTIVE and "[ON]" or "[OFF]")
-        teleBtn.BackgroundColor3 = TELEPORT_ACTIVE and Color3.new(0.1, 0.4, 0.8) or Color3.new(0.3, 0.3, 0.3)
-    end)
-    yOff = yOff + 48
-
-    -- Kill All
-    AddButton("Tuer tous", yOff, Color3.new(0.7, 0.1, 0.1), function()
-        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-            if v ~= p and v.Character then
-                local h = v.Character:FindFirstChild("Humanoid")
-                if h then
-                    h.Health = 0
-                    local e = Instance.new("Explosion")
-                    e.Position = v.Character.HumanoidRootPart.Position
-                    e.BlastRadius = 10
-                    e.BlastPressure = 0
-                    e.Parent = workspace
-                end
-            end
-        end
-        ChangerNom()
-    end)
-    yOff = yOff + 48
-
-    -- Épées orbitales
-    local swordBtn = AddButton("Épées orbitales [ON]", yOff, Color3.new(0.8, 0.6, 0), function()
-        SWORDS_ACTIVE = not SWORDS_ACTIVE
-        swordBtn.Text = "Épées orbitales " .. (SWORDS_ACTIVE and "[ON]" or "[OFF]")
-        swordBtn.BackgroundColor3 = SWORDS_ACTIVE and Color3.new(0.8, 0.6, 0) or Color3.new(0.3, 0.3, 0.3)
-        if SWORDS_ACTIVE then CreerSwords()
-        else for _, s in pairs(swords) do s:Destroy() end swords = {} end
-    end)
-    yOff = yOff + 48
-
-    -- Aimbot
-    local aimBtn = AddButton("Aimbot [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
-        AIMBOT_ACTIVE = not AIMBOT_ACTIVE
-        aimBtn.Text = "Aimbot " .. (AIMBOT_ACTIVE and "[ON]" or "[OFF]")
-        aimBtn.BackgroundColor3 = AIMBOT_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-    end)
-    yOff = yOff + 48
-
-    -- Wallhack
-    local wallBtn = AddButton("Wallhack [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
-        WALLHACK_ACTIVE = not WALLHACK_ACTIVE
-        wallBtn.Text = "Wallhack " .. (WALLHACK_ACTIVE and "[ON]" or "[OFF]")
-        wallBtn.BackgroundColor3 = WALLHACK_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-        UpdateWallhack()
-    end)
-    yOff = yOff + 48
-
-    -- Vol véhicule
-    local vehicleBtn = AddButton("Vol véhicule [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
-        STEAL_VEHICLE_ACTIVE = not STEAL_VEHICLE_ACTIVE
-        vehicleBtn.Text = "Vol véhicule " .. (STEAL_VEHICLE_ACTIVE and "[ON]" or "[OFF]")
-        vehicleBtn.BackgroundColor3 = STEAL_VEHICLE_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-        if STEAL_VEHICLE_ACTIVE then StealVehicle() end
-    end)
-    yOff = yOff + 48
-
-    -- Particules
-    local particleBtn = AddButton("Particules [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
-        PARTICLES_ACTIVE = not PARTICLES_ACTIVE
-        particleBtn.Text = "Particules " .. (PARTICLES_ACTIVE and "[ON]" or "[OFF]")
-        particleBtn.BackgroundColor3 = PARTICLES_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-        ToggleParticles()
-    end)
-    yOff = yOff + 48
-
-    -- Anti-AFK
-    local afkBtn = AddButton("Anti-AFK [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
-        ANTI_AFK_ACTIVE = not ANTI_AFK_ACTIVE
-        afkBtn.Text = "Anti-AFK " .. (ANTI_AFK_ACTIVE and "[ON]" or "[OFF]")
-        afkBtn.BackgroundColor3 = ANTI_AFK_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-        ToggleAntiAFK()
-    end)
-    yOff = yOff + 48
-
-    -- Clone
-    local cloneBtn = AddButton("Clone [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
-        CLONE_ACTIVE = not CLONE_ACTIVE
-        cloneBtn.Text = "Clone " .. (CLONE_ACTIVE and "[ON]" or "[OFF]")
-        cloneBtn.BackgroundColor3 = CLONE_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-        ToggleClone()
-    end)
-    yOff = yOff + 48
-
-    -- Noclip
-    local noclipBtn = AddButton("Noclip [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
-        NOCLIP_ACTIVE = not NOCLIP_ACTIVE
-        noclipBtn.Text = "Noclip " .. (NOCLIP_ACTIVE and "[ON]" or "[OFF]")
-        noclipBtn.BackgroundColor3 = NOCLIP_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
-        ToggleNoclip()
-    end)
-    yOff = yOff + 48
-
-    scroll.CanvasSize = UDim2.new(0, 0, 0, yOff + 20)
-
-    -- Panel Admin
-    local pAdmin = panels[2]
-    CreateAdminPanel(pAdmin)
-
-    -- Panel Crédits
-    local p2 = panels[3]
-    local credits = Instance.new("TextLabel")
-    credits.Size = UDim2.new(1, 0, 1, 0)
-    credits.BackgroundTransparency = 1
-    credits.Text = "Crédits :\nAntonio Vaztoodix\nMicha\nIsmaël Daniel\nDeepSeek"
-    credits.TextColor3 = Color3.new(0.7, 0.9, 1)
-    credits.TextSize = 22
-    credits.Font = Enum.Font.GothamBold
-    credits.TextScaled = true
-    credits.Parent = p2
-
-    -- Panel Chocola
-    local p3 = panels[4]
-    local chocFns = {"m", "Ma", "Fa", "K"}
-    for i, fn in pairs(chocFns) do
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 180, 0, 40)
-        btn.Position = UDim2.new(0.5, -90, 0, 20 + (i-1) * 50)
-        btn.BackgroundColor3 = Color3.new(0.15, 0.3, 0.6)
-        btn.Text = "Lancer " .. fn .. "()"
-        btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.TextSize = 14
-        btn.Font = Enum.Font.GothamBold
-        btn.Parent = p3
-        btn.MouseButton1Click:Connect(function()
-            if chocola[fn] and type(chocola[fn]) == "function" then
-                pcall(chocola[fn])
-            end
-        end)
-    end
-
-    -- Panel Miranda
-    local p4 = panels[5]
-    local mirBtn = Instance.new("TextButton")
-    mirBtn.Size = UDim2.new(0, 220, 0, 50)
-    mirBtn.Position = UDim2.new(0.5, -110, 0, 50)
-    mirBtn.BackgroundColor3 = Color3.new(0.7, 0.1, 0.1)
-    mirBtn.Text = "Lancer Miranda Hub"
-    mirBtn.TextColor3 = Color3.new(1, 1, 1)
-    mirBtn.TextSize = 16
-    mirBtn.Font = Enum.Font.GothamBold
-    mirBtn.Parent = p4
-    mirBtn.MouseButton1Click:Connect(function()
-        if not mirandaLoaded then
-            pcall(function()
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/MIRANDA-HUB-STEAL-AN-EGG/refs/heads/main/FREE-LEAKED"))()
-                mirandaLoaded = true
-                mirBtn.Text = "✓ Miranda lancé"
-                mirBtn.BackgroundColor3 = Color3.new(0.1, 0.6, 0.1)
-            end)
-        end
-    end)
-
-    local mirInfo = Instance.new("TextLabel")
-    mirInfo.Size = UDim2.new(1, 0, 0, 30)
-    mirInfo.Position = UDim2.new(0, 0, 0, 120)
-    mirInfo.BackgroundTransparency = 1
-    mirInfo.Text = "Cliquez pour charger Miranda Hub"
-    mirInfo.TextColor3 = Color3.new(0.6, 0.8, 1)
-    mirInfo.TextSize = 14
-    mirInfo.Font = Enum.Font.Gotham
-    mirInfo.Parent = p4
-
-    -- Raccourcis
-    uis.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == Enum.KeyCode.T then Teleporter() end
-        if not processed and input.KeyCode == Enum.KeyCode.Escape then sg:Destroy() GUI_ACTIVE = false end
-    end)
-
-    print("✅ Interface Vaztoodix Ultime créée avec 8 nouvelles fonctions !")
-    return sg
-end
-
--- === BOUCLES DE MISE À JOUR ===
-rs.Heartbeat:Connect(AimbotLoop)
-
+if C then if c then c:Destroy()end c=nil return end
+if not P.Character then return end
+c=P.Character:Clone()
+c.Parent=workspace
+c.Name="Clone"
+local h=c:FindFirstChild("Humanoid")
+if h then h.WalkSpeed=20 h.JumpPower=50 end
 task.spawn(function()
-    while GUI_ACTIVE do
-        task.wait(1)
-        if WALLHACK_ACTIVE then UpdateWallhack() end
-    end
+while c and c.Parent do
+local t=nil
+for _,v in pairs(game:GetService("Players"):GetPlayers())do
+if v~=P and v.Character then t=v.Character break end
+end
+if t and t:FindFirstChild("HumanoidRootPart")then
+c.HumanoidRootPart.CFrame=t.HumanoidRootPart.CFrame*CFrame.new(0,0,3)
+if(c.HumanoidRootPart.Position-t.HumanoidRootPart.Position).Magnitude<5 then
+local h=t:FindFirstChild("Humanoid")
+if h then h.Health=0 end
+end
+end
+task.wait(0.5)
+end
 end)
+end
 
-rs.Heartbeat:Connect(function()
-    if GUI_ACTIVE then
-        local list = {
-            {Nom = "zizi Tranchant", Portee = 500, Couleur = "Bright red", Forme = "spiral"},
-            {Nom = "Micha Minivichi", Portee = 600, Couleur = "Bright blue", Forme = "double"},
-            {Nom = "istadyxx26", Portee = 600, Special = true}
-        }
-        for _, a in pairs(list) do
-            if not p.Backpack:FindFirstChild(a.Nom) and not p.Character:FindFirstChild(a.Nom) then
-                if a.Special then CreerArmeSpecial() else CreerArme(a.Nom, a.Portee, a.Couleur, a.Forme) end
-            end
-        end
-        if SWORDS_ACTIVE and #swords == 0 and p.Character then CreerSwords() end
-    end
+local function ToggleN()
+N=not N
+if P.Character then
+for _,v in pairs(P.Character:GetDescendants())do
+if v:IsA("BasePart")then v.CanCollide=not N end
+end
+end
+end
+
+local function AdminPanel(parent)
+local sc=Instance.new("ScrollingFrame")
+sc.Size=UDim2.new(1,0,1,0)
+sc.BackgroundTransparency=1
+sc.BorderSizePixel=0
+sc.ScrollBarThickness=8
+sc.Parent=parent
+local y=0
+local function Refresh()
+for _,v in pairs(sc:GetChildren())do v:Destroy()end
+y=0
+for _,v in pairs(game:GetService("Players"):GetPlayers())do
+if v~=P then
+local b=Instance.new("TextButton")
+b.Size=UDim2.new(0,220,0,35)
+b.Position=UDim2.new(0.5,-110,0,y)
+b.BackgroundColor3=Color3.new(0.15,0.2,0.4)
+b.Text=v.Name
+b.TextColor3=Color3.new(1,1,1)
+b.TextSize=14
+b.Font=Enum.Font.GothamBold
+b.Parent=sc
+b.MouseButton1Click:Connect(function()
+if v.Character and v.Character:FindFirstChild("HumanoidRootPart")then
+P.Character.HumanoidRootPart.CFrame=v.Character.HumanoidRootPart.CFrame
+end
 end)
-
-task.spawn(function()
-    while task.wait(30) do
-        if GUI_ACTIVE then ChangerNom() end
-    end
+b.MouseButton2Click:Connect(function()
+if v.Character then
+local h=v.Character:FindFirstChild("Humanoid")
+if h then h.Health=0 end
+end
 end)
+local inf=Instance.new("TextLabel")
+inf.Size=UDim2.new(0,100,0,20)
+inf.Position=UDim2.new(0.5,130,0,y+8)
+inf.BackgroundTransparency=1
+inf.Text="Click=TP | Right=Kill"
+inf.TextColor3=Color3.new(0.6,0.6,0.6)
+inf.TextSize=10
+inf.Font=Enum.Font.Gotham
+inf.Parent=sc
+y=y+45
+end
+end
+sc.CanvasSize=UDim2.new(0,0,0,y+20)
+end
+Refresh()
+task.spawn(function()while G do task.wait(5)Refresh()end end)
+end
 
+local function CreateUI()
+for _,v in pairs(P.PlayerGui:GetChildren())do if v.Name=="VaztoodixHub"or v.Name=="VaztoodixToggle"then v:Destroy()end end
+local sg=Instance.new("ScreenGui")
+sg.Name="VaztoodixHub"
+sg.ResetOnSpawn=false
+sg.Parent=P.PlayerGui
+sg.Enabled=true
+X=sg
+local bg=Instance.new("Frame")
+bg.Size=UDim2.new(1,0,1,0)
+bg.BackgroundColor3=Color3.new(0,0,0)
+bg.BackgroundTransparency=0.4
+bg.BorderSizePixel=0
+bg.Parent=sg
+local w=Instance.new("Frame")
+w.Size=UDim2.new(0,600,0,520)
+w.Position=UDim2.new(0.5,-300,0.5,-260)
+w.BackgroundColor3=Color3.new(0.05,0.05,0.2)
+w.BackgroundTransparency=0.05
+w.BorderSizePixel=1
+w.BorderColor3=Color3.new(0.2,0.4,0.8)
+w.Active=true
+w.Draggable=true
+w.Parent=sg
+Y=w
+local t=Instance.new("TextLabel")
+t.Size=UDim2.new(1,0,0,50)
+t.Position=UDim2.new(0,0,0,0)
+t.BackgroundColor3=Color3.new(0.1,0.2,0.5)
+t.BackgroundTransparency=0.2
+t.Text="VAZTOODIX ™ ULTIMATE"
+t.TextColor3=Color3.new(0.6,0.8,1)
+t.TextSize=26
+t.Font=Enum.Font.GothamBold
+t.Parent=w
+local c=Instance.new("TextButton")
+c.Size=UDim2.new(0,30,0,30)
+c.Position=UDim2.new(0.94,0,0.02,0)
+c.BackgroundColor3=Color3.new(0.6,0.1,0.1)
+c.Text="X"
+c.TextColor3=Color3.new(1,1,1)
+c.TextSize=16
+c.Font=Enum.Font.GothamBold
+c.Parent=w
+c.MouseButton1Click:Connect(function()sg:Destroy()G=false if Z then Z.Parent:Destroy()end end)
+local m=Instance.new("TextButton")
+m.Size=UDim2.new(0,30,0,30)
+m.Position=UDim2.new(0.88,0,0.02,0)
+m.BackgroundColor3=Color3.new(0.1,0.3,0.5)
+m.Text="—"
+m.TextColor3=Color3.new(1,1,1)
+m.TextSize=20
+m.Font=Enum.Font.GothamBold
+m.Parent=w
+m.MouseButton1Click:Connect(function()
+w.Visible=false
+if not Z or not Z.Parent then
+local tg=Instance.new("ScreenGui")
+tg.Name="VaztoodixToggle"
+tg.ResetOnSpawn=false
+tg.Parent=P.PlayerGui
+tg.Enabled=true
+local cir=Instance.new("ImageButton")
+cir.Size=UDim2.new(0,60,0,60)
+cir.Position=UDim2.new(0.02,0,0.85,0)
+cir.BackgroundColor3=Color3.new(0.1,0.4,0.8)
+cir.BackgroundTransparency=0.2
+cir.BorderSizePixel=2
+cir.BorderColor3=Color3.new(0.6,0.8,1)
+cir.Image="rbxassetid://1787805705"
+cir.ImageTransparency=0.3
+cir.ImageColor3=Color3.new(1,1,1)
+cir.Parent=tg
+local lab=Instance.new("TextLabel")
+lab.Size=UDim2.new(1,0,1,0)
+lab.BackgroundTransparency=1
+lab.Text="Vaz"
+lab.TextColor3=Color3.new(1,1,1)
+lab.TextSize=18
+lab.Font=Enum.Font.GothamBold
+lab.Parent=cir
+Z=cir
+cir.MouseButton1Click:Connect(function()
+w.Visible=true
+if tg then tg:Destroy()end
+Z=nil
+end)
+end
+end)
+local tabs=Instance.new("Frame")
+tabs.Size=UDim2.new(1,-20,0,40)
+tabs.Position=UDim2.new(0,10,0,55)
+tabs.BackgroundTransparency=1
+tabs.Parent=w
+local names={"Principale","Admin","Crédits","Chocola","Miranda"}
+local tb={}
+local pn={}
+for i,name in pairs(names)do
+local b=Instance.new("TextButton")
+b.Size=UDim2.new(0,110,0,32)
+b.Position=UDim2.new(0,(i-1)*115,0,0)
+b.BackgroundColor3=Color3.new(0.15,0.25,0.5)
+b.Text=name
+b.TextColor3=Color3.new(0.8,0.9,1)
+b.TextSize=14
+b.Font=Enum.Font.GothamBold
+b.Parent=tabs
+tb[i]=b
+local p=Instance.new("Frame")
+p.Size=UDim2.new(1,-20,1,-100)
+p.Position=UDim2.new(0,10,0,100)
+p.BackgroundTransparency=1
+p.Visible=(i==1)
+p.Parent=w
+pn[i]=p
+b.MouseButton1Click:Connect(function()
+for j,pl in pairs(pn)do pl.Visible=(j==i)end
+for j,bb in pairs(tb)do bb.BackgroundColor3=(j==i)and Color3.new(0.2,0.4,0.8)or Color3.new(0.15,0.25,0.5)end
+end)
+end
+local p1=pn[1]
+local sc=Instance.new("ScrollingFrame")
+sc.Size=UDim2.new(1,0,1,0)
+sc.Position=UDim2.new(0,0,0,0)
+sc.BackgroundTransparency=1
+sc.BorderSizePixel=0
+sc.ScrollBarThickness=8
+sc.ScrollBarImageColor3=Color3.new(0.3,0.6,1)
+sc.CanvasSize=UDim2.new(0,0,0,900)
+sc.Parent=p1
+local function AddBtn(txt,y,col,act,cb)
+local c=Instance.new("Frame")
+c.Size=UDim2.new(0,280,0,40)
+c.Position=UDim2.new(0.5,-140,0,y)
+c.BackgroundTransparency=1
+c.Parent=sc
+local b=Instance.new("TextButton")
+b.Size=UDim2.new(0,200,0,38)
+b.Position=UDim2.new(0,0,0,0)
+b.BackgroundColor3=col
+b.Text=txt
+b.TextColor3=Color3.new(1,1,1)
+b.TextSize=14
+b.Font=Enum.Font.GothamBold
+b.Parent=c
+local ind=Instance.new("Frame")
+ind.Size=UDim2.new(0,20,0,20)
+ind.Position=UDim2.new(1,10,0.5,-10)
+ind.BackgroundColor3=act and Color3.new(0.2,0.8,0.2)or Color3.new(0.8,0.2,0.2)
+ind.BorderSizePixel=1
+ind.BorderColor3=Color3.new(1,1,1)
+ind.Parent=c
+local st=Instance.new("TextLabel")
+st.Size=UDim2.new(1,0,1,0)
+st.BackgroundTransparency=1
+st.Text=act and"ON"or"OFF"
+st.TextColor3=Color3.new(1,1,1)
+st.TextSize=10
+st.Font=Enum.Font.GothamBold
+st.Parent=ind
+local a=act
+b.MouseButton1Click:Connect(function()
+a=not a
+b.BackgroundColor3=a and col or Color3.new(0.5,0.1,0.1)
+ind.BackgroundColor3=a and Color3.new(0.2,0.8,0.2)or Color3.new(0.8,0.2,0.2)
+st.Text=a and"ON"or"OFF"
+cb(a)
+end)
+return c
+end
+local y=10
+local ar={{"zizi Tranchant",500,Color3.new(0.2,0.8,0.2),false},{"Micha Minivichi",600,Color3.new(0.2,0.5,0.9),false},{"istadyxx26 ★",600,Color3.new(0.7,0.2,0.9),true}}
+for _,d in pairs(ar)do
+AddBtn(d[1],y,d[3],true,function(a)
+local nm=string.gsub(d[1]," ★","")
+if a then
+if d[4]then a()else
+local c=(nm=="zizi Tranchant")and"Bright red"or"Bright blue"
+local f=(nm=="zizi Tranchant")and"spiral"or"double"
+i(nm,d[2],c,f)
+end
+else
+local t=P.Backpack:FindFirstChild(nm)
+if t then t:Destroy()end
+t=P.Character:FindFirstChild(nm)
+if t then t:Destroy()end
+end
+end)
+y=y+48
+end
+AddBtn("Téléport",y,Color3.new(0.1,0.4,0.8),true,function(a)T=a end)
+y=y+48
+local kill=Instance.new("TextButton")
+kill.Size=UDim2.new(0,200,0,38)
+kill.Position=UDim2.new(0.5,-100,0,y)
+kill.BackgroundColor3=Color3.new(0.7,0.1,0.1)
+kill.Text="Tuer tous"
+kill.TextColor3=Color3.new(1,1,1)
+kill.TextSize=14
+kill.Font=Enum.Font.GothamBold
+kill.Parent=sc
+kill.MouseButton1Click:Connect(function()
+for _,v in pairs(game:GetService("Players"):GetPlayers())do
+if v~=P and v.Character then
+local h=v.Character:FindFirstChild("Humanoid")
+if h then
+h.Health=0
+local e=Instance.new("Explosion")
+e.Position=v.Character.HumanoidRootPart.Position
+e.BlastRadius=10
+e.BlastPressure=0
+e.Parent=workspace
+end
+end
+end
+n()end)
+y=y+48
+AddBtn("Épées orbitales",y,Color3.new(0.8,0.6,0),true,function(a)W=a if a then b()else for _,v in pairs(s)do v:Destroy()end s={}end end)
+y=y+48
+AddBtn("Aimbot",y,Color3.new(0.2,0.8,0.2),false,function(a)A=a end)
+y=y+48
+AddBtn("Wallhack",y,Color3.new(0.2,0.8,0.2),false,function(a)H=a Wallhack()end)
+y=y+48
+AddBtn("Vol véhicule",y,Color3.new(0.2,0.8,0.2),false,function(a)V=a if a then Steal()end end)
+y=y+48
+AddBtn("Particules",y,Color3.new(0.2,0.8,0.2),false,function(a)Q=a ToggleP()end)
+y=y+48
+AddBtn("Anti-AFK",y,Color3.new(0.2,0.8,0.2),false,function(a)K=a ToggleAFK()end)
+y=y+48
+AddBtn("Clone",y,Color3.new(0.2,0.8,0.2),false,function(a)C=a ToggleClone()end)
+y=y+48
+AddBtn("Noclip",y,Color3.new(0.2,0.8,0.2),false,function(a)N=a ToggleN()end)
+y=y+48
+sc.CanvasSize=UDim2.new(0,0,0,y+20)
+AdminPanel(pn[2])
+local p2=pn[3]
+local cr=Instance.new("TextLabel")
+cr.Size=UDim2.new(1,0,1,0)
+cr.BackgroundTransparency=1
+cr.Text="Crédits :\nAntonio Vaztoodix\nMicha\nIsmaël Daniel\nDeepSeek"
+cr.TextColor3=Color3.new(0.7,0.9,1)
+cr.TextSize=22
+cr.Font=Enum.Font.GothamBold
+cr.TextScaled=true
+cr.Parent=p2
+local p3=pn[4]
+local cF={"m","Ma","Fa","K"}
+for i,f in pairs(cF)do
+local b=Instance.new("TextButton")
+b.Size=UDim2.new(0,180,0,40)
+b.Position=UDim2.new(0.5,-90,0,20+(i-1)*50)
+b.BackgroundColor3=Color3.new(0.15,0.3,0.6)
+b.Text="Lancer "..f.."()"
+b.TextColor3=Color3.new(1,1,1)
+b.TextSize=14
+b.Font=Enum.Font.GothamBold
+b.Parent=p3
+b.MouseButton1Click:Connect(function()
+if M[f]and type(M[f])=="function"then pcall(M[f])end
+end)
+end
+local p4=pn[5]
+local mb=Instance.new("TextButton")
+mb.Size=UDim2.new(0,220,0,50)
+mb.Position=UDim2.new(0.5,-110,0,50)
+mb.BackgroundColor3=Color3.new(0.7,0.1,0.1)
+mb.Text="Lancer Miranda Hub"
+mb.TextColor3=Color3.new(1,1,1)
+mb.TextSize=16
+mb.Font=Enum.Font.GothamBold
+mb.Parent=p4
+mb.MouseButton1Click:Connect(function()
+if not m then
 pcall(function()
-    local r = loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Pet-Spawner-steal-an-egg/refs/heads/main/script.lua"))()
-    if type(r) == "table" then chocola = r end
+loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/MIRANDA-HUB-STEAL-AN-EGG/refs/heads/main/FREE-LEAKED"))()
+m=true
+mb.Text="✓ Miranda lancé"
+mb.BackgroundColor3=Color3.new(0.1,0.6,0.1)
 end)
+end
+end)
+local mi=Instance.new("TextLabel")
+mi.Size=UDim2.new(1,0,0,30)
+mi.Position=UDim2.new(0,0,0,120)
+mi.BackgroundTransparency=1
+mi.Text="Cliquez pour charger Miranda Hub"
+mi.TextColor3=Color3.new(0.6,0.8,1)
+mi.TextSize=14
+mi.Font=Enum.Font.Gotham
+mi.Parent=p4
+U.InputBegan:Connect(function(i,p)
+if not p and i.KeyCode==Enum.KeyCode.T then d()end
+if not p and i.KeyCode==Enum.KeyCode.Escape then
+sg:Destroy()
+G=false
+if Z then Z.Parent:Destroy()end
+end
+end)
+print("UI chargée")
+return sg
+end
 
--- === LANCEMENT ===
-CreerToutesArmes()
-CreerInterface()
-CreerSwords()
-print("✅ Vaztoodix Ultime chargé - 8 nouvelles fonctionnalités actives !")
-print("Touche T pour téléporter | Échap ferme l'interface")
+R.Heartbeat:Connect(Aimbot)
+task.spawn(function()while G do task.wait(1)if H then Wallhack()end end end)
+R.Heartbeat:Connect(function()
+if G then
+local a={{Nom="zizi Tranchant",Portee=500,Couleur="Bright red",Forme="spiral"},{Nom="Micha Minivichi",Portee=600,Couleur="Bright blue",Forme="double"},{Nom="istadyxx26",Portee=600,Special=true}}
+for _,v in pairs(a)do
+if not P.Backpack:FindFirstChild(v.Nom)and not P.Character:FindFirstChild(v.Nom)then
+if v.Special then a()else i(v.Nom,v.Portee,v.Couleur,v.Forme)end
+end
+end
+if W and #s==0 and P.Character then b()end
+end
+end)
+task.spawn(function()while task.wait(30)do if G then n()end end end)
+pcall(function()local r=loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Pet-Spawner-steal-an-egg/refs/heads/main/script.lua"))()if type(r)=="table"then M=r end end)
+l()
+CreateUI()
+b()
+print("✅ Vaztoodix Ultime compacté - Toutes fonctions actives")
+print("Touche T pour téléporter | Échap ferme | — réduit")
