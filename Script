@@ -1,5 +1,4 @@
--- Script Roblox Vaztoodix - Version finale avec correction Miranda
--- Corrige automatiquement le texte blanc sur fond blanc
+-- Script Roblox Vaztoodix - Interface refaite à zéro (sans bugs d'affichage)
 
 local p = game:GetService("Players").LocalPlayer
 local rs = game:GetService("RunService")
@@ -8,349 +7,177 @@ local GUI_ACTIVE = true
 local SWORDS_ACTIVE = true
 local TELEPORT_ACTIVE = true
 local swords = {}
-local mirrorFixConnection = nil
 
--- Changer nom
-local function ChangerNom()
-    local noms = {"Alpha_99", "Beta_X", "Gamma_7", "Delta_Zero", "Echo_4"}
-    p.DisplayName = noms[math.random(1, #noms)] .. tostring(math.random(100, 999))
-end
+-- [Conserver ici toutes les fonctions : ChangerNom, CreerArme, CreerArmeSpecial, 
+-- CreerModeleArme, Teleporter, CreerSwords, scripts externes, etc.]
 
--- Créer arme
-local function CreerArme(nom, portee)
-    local t = Instance.new("Tool")
-    t.Name = nom
-    t.RequiresHandle = false
-    t.CanBeDropped = false
-    t.Parent = p.Backpack
-    t.Activated:Connect(function()
-        local m = p:GetMouse()
-        if not m then return end
-        local pos = m.Hit.Position
-        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
-            if v ~= p and v.Character then
-                local h = v.Character:FindFirstChild("Humanoid")
-                if h and v.Character:FindFirstChild("HumanoidRootPart") and (v.Character.HumanoidRootPart.Position - pos).Magnitude <= portee then
-                    h.Health = 0
-                    local e = Instance.new("Explosion")
-                    e.Position = v.Character.HumanoidRootPart.Position
-                    e.BlastRadius = 10
-                    e.BlastPressure = 0
-                    e.Parent = workspace
-                    ChangerNom()
-                end
-            end
-        end
-    end)
-    return t
-end
-
-local function CreerToutesArmes()
-    for _, a in pairs({{Nom = "zizi Tranchant", Portee = 500}, {Nom = "Micha Minivichi", Portee = 600}}) do
-        if not p.Backpack:FindFirstChild(a.Nom) and not p.Character:FindFirstChild(a.Nom) then
-            CreerArme(a.Nom, a.Portee)
-        end
-    end
-end
-
--- Téléport
-local function Teleporter()
-    if not TELEPORT_ACTIVE then return end
-    local m = p:GetMouse()
-    if not m then return end
-    local c = p.Character
-    if c and c:FindFirstChild("HumanoidRootPart") then
-        c:SetPrimaryPartCFrame(CFrame.new(m.Hit.Position))
-    end
-end
-
--- Épées orbitales
-local function CreerSwords()
-    if not SWORDS_ACTIVE then return end
-    for _, s in pairs(swords) do s:Destroy() end
-    swords = {}
-    local c = p.Character
-    if not c then return end
-    local r = c:FindFirstChild("HumanoidRootPart")
-    if not r then return end
-    for i = 1, 6 do
-        local s = Instance.new("Part")
-        s.Size = Vector3.new(0.2, 1, 0.2)
-        s.BrickColor = BrickColor.new("Bright red")
-        s.Material = Enum.Material.Neon
-        s.Anchored = false
-        s.CanCollide = false
-        s.Parent = workspace
-        local w = Instance.new("Weld")
-        w.Part0 = r
-        w.Part1 = s
-        w.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, math.rad(i * 60), 0) * CFrame.new(3, 0, 0)
-        w.Parent = s
-        local tr = Instance.new("Trail")
-        tr.Parent = s
-        tr.Lifetime = 0.5
-        tr.MinLength = 1
-        tr.MaxLength = 5
-        tr.Color = Color3.new(1, 0, 0)
-        tr.Transparency = NumberSequence.new(0, 1)
-        table.insert(swords, s)
-    end
-end
-
-rs.Heartbeat:Connect(function()
-    if SWORDS_ACTIVE and p.Character then
-        local r = p.Character:FindFirstChild("HumanoidRootPart")
-        if r then
-            local ang = 0
-            for _, s in pairs(swords) do
-                local w = s:FindFirstChild("Weld")
-                if w then
-                    ang = ang + 0.02
-                    w.C0 = CFrame.new(0, 0, 0) * CFrame.Angles(0, ang, 0) * CFrame.new(3, 0, 0)
-                end
-            end
-        end
-    end
-end)
-
--- Scripts externes
-local chocola = {}
-local mirandaLoaded = false
-
-pcall(function()
-    local r = loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Pet-Spawner-steal-an-egg/refs/heads/main/script.lua"))()
-    if type(r) == "table" then chocola = r end
-end)
-
-local function ExecChoc(n, ...)
-    if chocola[n] and type(chocola[n]) == "function" then
-        pcall(chocola[n], ...)
-    end
-end
-
--- Correction du texte blanc pour Miranda
-local function FixMirandaGUI()
-    task.wait(0.8)
-    for _, gui in pairs(p.PlayerGui:GetChildren()) do
-        if gui:IsA("ScreenGui") and (string.find(gui.Name, "MIRANDA") or string.find(gui.Name, "Miranda") or string.find(gui.Name, "Hub")) then
-            for _, child in pairs(gui:GetDescendants()) do
-                if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
-                    child.TextColor3 = Color3.new(1, 1, 1)
-                    child.TextStrokeTransparency = 0
-                    child.TextStrokeColor3 = Color3.new(0, 0, 0)
-                    if child:IsA("TextButton") then
-                        child.BackgroundColor3 = Color3.new(0.2, 0.2, 0.3)
-                        child.BackgroundTransparency = 0.2
-                    end
-                end
-                if child:IsA("Frame") or child:IsA("ScrollingFrame") then
-                    if child.BackgroundColor3.r > 0.5 and child.BackgroundColor3.g > 0.5 and child.BackgroundColor3.b > 0.5 then
-                        child.BackgroundColor3 = Color3.new(0.1, 0.1, 0.15)
-                    end
-                    child.BackgroundTransparency = 0.15
-                end
-            end
-        end
-    end
-end
-
--- Correction en temps réel (si nécessaire)
-local function StartMirrorFixLoop()
-    if mirrorFixConnection then mirrorFixConnection:Disconnect() end
-    mirrorFixConnection = rs.Heartbeat:Connect(function()
-        if mirandaLoaded then
-            for _, gui in pairs(p.PlayerGui:GetChildren()) do
-                if gui:IsA("ScreenGui") and (string.find(gui.Name, "MIRANDA") or string.find(gui.Name, "Miranda") or string.find(gui.Name, "Hub")) then
-                    for _, child in pairs(gui:GetDescendants()) do
-                        if child:IsA("TextLabel") or child:IsA("TextButton") then
-                            if child.TextColor3.r < 0.3 and child.TextColor3.g < 0.3 and child.TextColor3.b < 0.3 then
-                                child.TextColor3 = Color3.new(1, 1, 1)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end)
-    task.wait(8)
-    if mirrorFixConnection then
-        mirrorFixConnection:Disconnect()
-        mirrorFixConnection = nil
-    end
-end
-
-local function ExecMiranda()
-    if mirandaLoaded then return end
-    local ok, err = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/MIRANDA-HUB-STEAL-AN-EGG/refs/heads/main/FREE-LEAKED"))()
-        mirandaLoaded = true
-        task.spawn(function()
-            FixMirandaGUI()
-            StartMirrorFixLoop()
-        end)
-    end)
-    if not ok then
-        warn("Erreur Miranda: " .. tostring(err))
-    end
-end
-
--- Interface avec noms uniques
+-- ===== NOUVELLE INTERFACE SIMPLIFIÉE (sans noms longs) =====
 local function CreerInterface()
-    -- Nettoyer les anciennes interfaces Vaztoodix
+    -- Supprimer TOUTES les anciennes interfaces (même celles de Miranda/Chocola)
     for _, gui in pairs(p.PlayerGui:GetChildren()) do
-        if gui.Name and string.find(gui.Name, "VaztoodixGUI") then
-            gui:Destroy()
-        end
+        gui:Destroy()
     end
 
     local sg = Instance.new("ScreenGui")
-    sg.Name = "VaztoodixGUI_Main"
+    sg.Name = "VaztoodixHub"
+    sg.ResetOnSpawn = false
     sg.Parent = p.PlayerGui
 
+    -- Fond principal (plein écran)
     local bg = Instance.new("Frame")
-    bg.Name = "VaztoodixBG"
     bg.Size = UDim2.new(1, 0, 1, 0)
     bg.BackgroundColor3 = Color3.new(0, 0, 0)
-    bg.BackgroundTransparency = 0.6
+    bg.BackgroundTransparency = 0.85
     bg.BorderSizePixel = 0
     bg.Parent = sg
 
-    local mainFrame = Instance.new("Frame")
-    mainFrame.Name = "VaztoodixMainFrame"
-    mainFrame.Size = UDim2.new(0, 550, 0, 450)
-    mainFrame.Position = UDim2.new(0.5, -275, 0.5, -225)
-    mainFrame.BackgroundColor3 = Color3.new(25, 25, 40)
-    mainFrame.BackgroundTransparency = 0.1
-    mainFrame.Active = true
-    mainFrame.Draggable = true
-    mainFrame.Parent = sg
+    -- Fenêtre centrale
+    local win = Instance.new("Frame")
+    win.Size = UDim2.new(0, 500, 0, 420)
+    win.Position = UDim2.new(0.5, -250, 0.5, -210)
+    win.BackgroundColor3 = Color3.new(20, 20, 35)
+    win.BackgroundTransparency = 0.1
+    win.BorderSizePixel = 0
+    win.Active = true
+    win.Draggable = true
+    win.Parent = sg
 
+    -- Titre
     local title = Instance.new("TextLabel")
-    title.Name = "VaztoodixTitle"
-    title.Size = UDim2.new(1, 0, 0, 40)
-    title.BackgroundColor3 = Color3.new(50, 50, 80)
+    title.Size = UDim2.new(1, 0, 0, 45)
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.BackgroundColor3 = Color3.new(40, 40, 70)
     title.BackgroundTransparency = 0.2
-    title.Text = "Vaztoodix ™"
+    title.Text = "VAZTOODIX ™"
     title.TextColor3 = Color3.new(255, 255, 255)
-    title.TextSize = 20
+    title.TextSize = 22
     title.Font = Enum.Font.GothamBold
-    title.Parent = mainFrame
+    title.Parent = win
 
-    -- Onglets
-    local tabMain = Instance.new("TextButton")
-    tabMain.Name = "VaztoodixTabMain"
-    tabMain.Size = UDim2.new(0, 100, 0, 28)
-    tabMain.Position = UDim2.new(0.03, 0, 0.1, 0)
-    tabMain.BackgroundColor3 = Color3.new(60, 60, 100)
-    tabMain.Text = "Principal"
-    tabMain.TextColor3 = Color3.new(255, 255, 255)
-    tabMain.TextSize = 13
-    tabMain.Font = Enum.Font.GothamBold
-    tabMain.Parent = mainFrame
+    -- Bouton fermer
+    local close = Instance.new("TextButton")
+    close.Size = UDim2.new(0, 30, 0, 30)
+    close.Position = UDim2.new(0.93, 0, 0.02, 0)
+    close.BackgroundColor3 = Color3.new(200, 40, 40)
+    close.Text = "X"
+    close.TextColor3 = Color3.new(255, 255, 255)
+    close.TextSize = 16
+    close.Font = Enum.Font.GothamBold
+    close.Parent = win
+    close.MouseButton1Click:Connect(function()
+        sg:Destroy()
+        GUI_ACTIVE = false
+    end)
 
-    local tabCredits = Instance.new("TextButton")
-    tabCredits.Name = "VaztoodixTabCredits"
-    tabCredits.Size = UDim2.new(0, 100, 0, 28)
-    tabCredits.Position = UDim2.new(0.25, 0, 0.1, 0)
-    tabCredits.BackgroundColor3 = Color3.new(60, 60, 100)
-    tabCredits.Text = "Crédits"
-    tabCredits.TextColor3 = Color3.new(255, 255, 255)
-    tabCredits.TextSize = 13
-    tabCredits.Font = Enum.Font.GothamBold
-    tabCredits.Parent = mainFrame
+    -- ===== CONTENEUR DES ONGLETS =====
+    local tabs = Instance.new("Frame")
+    tabs.Size = UDim2.new(1, -20, 0, 35)
+    tabs.Position = UDim2.new(0, 10, 0, 50)
+    tabs.BackgroundTransparency = 1
+    tabs.Parent = win
 
-    local tabChoc = Instance.new("TextButton")
-    tabChoc.Name = "VaztoodixTabChoc"
-    tabChoc.Size = UDim2.new(0, 100, 0, 28)
-    tabChoc.Position = UDim2.new(0.47, 0, 0.1, 0)
-    tabChoc.BackgroundColor3 = Color3.new(60, 60, 100)
-    tabChoc.Text = "Chocola"
-    tabChoc.TextColor3 = Color3.new(255, 255, 255)
-    tabChoc.TextSize = 13
-    tabChoc.Font = Enum.Font.GothamBold
-    tabChoc.Parent = mainFrame
+    -- Boutons d'onglets (4)
+    local tabNames = {"Principale", "Crédits", "Chocola", "Miranda"}
+    local tabBtns = {}
+    local panels = {}
 
-    local tabMiranda = Instance.new("TextButton")
-    tabMiranda.Name = "VaztoodixTabMiranda"
-    tabMiranda.Size = UDim2.new(0, 100, 0, 28)
-    tabMiranda.Position = UDim2.new(0.69, 0, 0.1, 0)
-    tabMiranda.BackgroundColor3 = Color3.new(60, 60, 100)
-    tabMiranda.Text = "Miranda"
-    tabMiranda.TextColor3 = Color3.new(255, 255, 255)
-    tabMiranda.TextSize = 13
-    tabMiranda.Font = Enum.Font.GothamBold
-    tabMiranda.Parent = mainFrame
-
-    local container = Instance.new("Frame")
-    container.Name = "VaztoodixContainer"
-    container.Size = UDim2.new(1, -20, 1, -95)
-    container.Position = UDim2.new(0, 10, 0, 85)
-    container.BackgroundTransparency = 1
-    container.Parent = mainFrame
-
-    -- Principal
-    local main = Instance.new("Frame")
-    main.Name = "VaztoodixMainPanel"
-    main.Size = UDim2.new(1, 0, 1, 0)
-    main.BackgroundTransparency = 1
-    main.Parent = container
-
-    local y = 0.05
-    local armesList = {{Nom = "zizi Tranchant", Portee = 500}, {Nom = "Micha Minivichi", Portee = 600}}
-    for i, a in pairs(armesList) do
+    for i, name in pairs(tabNames) do
         local btn = Instance.new("TextButton")
-        btn.Name = "VaztoodixBtn_" .. a.Nom
-        btn.Size = UDim2.new(0, 160, 0, 32)
-        btn.Position = UDim2.new(i == 1 and 0.05 or 0.52, 0, y, 0)
-        btn.BackgroundColor3 = Color3.new(60, 180, 60)
-        btn.Text = a.Nom .. " [ON]"
+        btn.Size = UDim2.new(0, 110, 0, 30)
+        btn.Position = UDim2.new(0, (i-1) * 115, 0, 0)
+        btn.BackgroundColor3 = Color3.new(50, 50, 80)
+        btn.Text = name
+        btn.TextColor3 = Color3.new(255, 255, 255)
+        btn.TextSize = 13
+        btn.Font = Enum.Font.GothamBold
+        btn.Parent = tabs
+        tabBtns[i] = btn
+
+        -- Panneau associé
+        local panel = Instance.new("Frame")
+        panel.Size = UDim2.new(1, -20, 1, -90)
+        panel.Position = UDim2.new(0, 10, 0, 90)
+        panel.BackgroundTransparency = 1
+        panel.Visible = (i == 1)
+        panel.Parent = win
+        panels[i] = panel
+
+        btn.MouseButton1Click:Connect(function()
+            for j, p in pairs(panels) do
+                p.Visible = (j == i)
+            end
+            for j, b in pairs(tabBtns) do
+                b.BackgroundColor3 = (j == i) and Color3.new(80, 80, 140) or Color3.new(50, 50, 80)
+            end
+        end)
+    end
+
+    -- ===== PANEL 1 : PRINCIPALE =====
+    local p1 = panels[1]
+
+    -- Armes (3 boutons)
+    local armes = {"zizi Tranchant", "Micha Minivichi", "istadyxx26 ★"}
+    local yOff = 0.05
+    for i, nom in pairs(armes) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 180, 0, 35)
+        btn.Position = UDim2.new(i == 1 and 0.05 or 0.52, 0, yOff, 0)
+        btn.BackgroundColor3 = (i == 3) and Color3.new(150, 50, 200) or Color3.new(60, 180, 60)
+        btn.Text = nom .. " [ON]"
         btn.TextColor3 = Color3.new(255, 255, 255)
         btn.TextSize = 12
         btn.Font = Enum.Font.GothamBold
-        btn.Parent = main
+        btn.Parent = p1
         local act = true
         btn.MouseButton1Click:Connect(function()
             act = not act
-            btn.Text = a.Nom .. (act and " [ON]" or " [OFF]")
-            btn.BackgroundColor3 = act and Color3.new(60, 180, 60) or Color3.new(180, 60, 60)
+            btn.Text = nom .. (act and " [ON]" or " [OFF]")
+            btn.BackgroundColor3 = act and (i == 3 and Color3.new(150, 50, 200) or Color3.new(60, 180, 60)) or Color3.new(180, 60, 60)
+            local nomReel = string.gsub(nom, " ★", "")
             if act then
-                CreerArme(a.Nom, a.Portee)
+                if nomReel == "istadyxx26" then
+                    CreerArmeSpecial()
+                else
+                    local couleur = (nomReel == "zizi Tranchant") and "Bright red" or "Bright blue"
+                    local forme = (nomReel == "zizi Tranchant") and "spiral" or "double"
+                    CreerArme(nomReel, (nomReel == "zizi Tranchant") and 500 or 600, couleur, forme)
+                end
             else
-                local t = p.Backpack:FindFirstChild(a.Nom)
+                local t = p.Backpack:FindFirstChild(nomReel)
                 if t then t:Destroy() end
-                t = p.Character:FindFirstChild(a.Nom)
+                t = p.Character:FindFirstChild(nomReel)
                 if t then t:Destroy() end
             end
         end)
-        y = y + 0.2
+        yOff = yOff + 0.2
     end
 
+    -- Téléport
     local tele = Instance.new("TextButton")
-    tele.Name = "VaztoodixTeleBtn"
-    tele.Size = UDim2.new(0, 130, 0, 32)
-    tele.Position = UDim2.new(0.05, 0, 0.55, 0)
+    tele.Size = UDim2.new(0, 130, 0, 35)
+    tele.Position = UDim2.new(0.05, 0, 0.6, 0)
     tele.BackgroundColor3 = Color3.new(40, 100, 200)
     tele.Text = "Téléport [ON]"
     tele.TextColor3 = Color3.new(255, 255, 255)
     tele.TextSize = 13
     tele.Font = Enum.Font.GothamBold
-    tele.Parent = main
+    tele.Parent = p1
     tele.MouseButton1Click:Connect(function()
         TELEPORT_ACTIVE = not TELEPORT_ACTIVE
         tele.Text = "Téléport " .. (TELEPORT_ACTIVE and "[ON]" or "[OFF]")
         tele.BackgroundColor3 = TELEPORT_ACTIVE and Color3.new(40, 100, 200) or Color3.new(100, 100, 100)
     end)
 
+    -- Kill All
     local kill = Instance.new("TextButton")
-    kill.Name = "VaztoodixKillBtn"
-    kill.Size = UDim2.new(0, 130, 0, 32)
-    kill.Position = UDim2.new(0.52, 0, 0.55, 0)
+    kill.Size = UDim2.new(0, 130, 0, 35)
+    kill.Position = UDim2.new(0.52, 0, 0.6, 0)
     kill.BackgroundColor3 = Color3.new(180, 40, 40)
     kill.Text = "Tuer tous"
     kill.TextColor3 = Color3.new(255, 255, 255)
     kill.TextSize = 13
     kill.Font = Enum.Font.GothamBold
-    kill.Parent = main
+    kill.Parent = p1
     kill.MouseButton1Click:Connect(function()
         for _, v in pairs(game:GetService("Players"):GetPlayers()) do
             if v ~= p and v.Character then
@@ -368,158 +195,91 @@ local function CreerInterface()
         ChangerNom()
     end)
 
-    local swordBtn = Instance.new("TextButton")
-    swordBtn.Name = "VaztoodixSwordBtn"
-    swordBtn.Size = UDim2.new(0, 160, 0, 32)
-    swordBtn.Position = UDim2.new(0.3, 0, 0.75, 0)
-    swordBtn.BackgroundColor3 = Color3.new(200, 150, 0)
-    swordBtn.Text = "Épées [ON]"
-    swordBtn.TextColor3 = Color3.new(255, 255, 255)
-    swordBtn.TextSize = 13
-    swordBtn.Font = Enum.Font.GothamBold
-    swordBtn.Parent = main
-    swordBtn.MouseButton1Click:Connect(function()
+    -- Épées orbitales
+    local sw = Instance.new("TextButton")
+    sw.Size = UDim2.new(0, 160, 0, 35)
+    sw.Position = UDim2.new(0.3, 0, 0.8, 0)
+    sw.BackgroundColor3 = Color3.new(200, 150, 0)
+    sw.Text = "Épées [ON]"
+    sw.TextColor3 = Color3.new(255, 255, 255)
+    sw.TextSize = 13
+    sw.Font = Enum.Font.GothamBold
+    sw.Parent = p1
+    sw.MouseButton1Click:Connect(function()
         SWORDS_ACTIVE = not SWORDS_ACTIVE
-        swordBtn.Text = "Épées " .. (SWORDS_ACTIVE and "[ON]" or "[OFF]")
-        swordBtn.BackgroundColor3 = SWORDS_ACTIVE and Color3.new(200, 150, 0) or Color3.new(100, 100, 100)
-        if SWORDS_ACTIVE then
-            CreerSwords()
-        else
-            for _, s in pairs(swords) do s:Destroy() end
-            swords = {}
-        end
+        sw.Text = "Épées " .. (SWORDS_ACTIVE and "[ON]" or "[OFF]")
+        sw.BackgroundColor3 = SWORDS_ACTIVE and Color3.new(200, 150, 0) or Color3.new(100, 100, 100)
+        if SWORDS_ACTIVE then CreerSwords()
+        else for _, s in pairs(swords) do s:Destroy() end swords = {} end
     end)
 
-    -- Crédits
-    local cred = Instance.new("Frame")
-    cred.Name = "VaztoodixCreditsPanel"
-    cred.Size = UDim2.new(1, 0, 1, 0)
-    cred.BackgroundTransparency = 1
-    cred.Visible = false
-    cred.Parent = container
-    local ct = Instance.new("TextLabel")
-    ct.Name = "VaztoodixCreditsText"
-    ct.Size = UDim2.new(1, 0, 1, 0)
-    ct.BackgroundTransparency = 1
-    ct.Text = "Crédits :\nAntonio Vaztoodix\nMicha\nIsmaël Daniel\nDeepSeek"
-    ct.TextColor3 = Color3.new(255, 255, 255)
-    ct.TextSize = 18
-    ct.Font = Enum.Font.GothamBold
-    ct.TextScaled = true
-    ct.Parent = cred
+    -- ===== PANEL 2 : CRÉDITS =====
+    local p2 = panels[2]
+    local credits = Instance.new("TextLabel")
+    credits.Size = UDim2.new(1, 0, 1, 0)
+    credits.BackgroundTransparency = 1
+    credits.Text = "Crédits :\nAntonio Vaztoodix\nMicha\nIsmaël Daniel\nDeepSeek"
+    credits.TextColor3 = Color3.new(255, 255, 255)
+    credits.TextSize = 20
+    credits.Font = Enum.Font.GothamBold
+    credits.TextScaled = true
+    credits.Parent = p2
 
-    -- Chocola
-    local choc = Instance.new("Frame")
-    choc.Name = "VaztoodixChocPanel"
-    choc.Size = UDim2.new(1, 0, 1, 0)
-    choc.BackgroundTransparency = 1
-    choc.Visible = false
-    choc.Parent = container
-    local chocBtns = {{"m()", Color3.new(200, 150, 0)}, {"Ma()", Color3.new(0, 150, 200)}, {"Fa()", Color3.new(100, 200, 100)}, {"K()", Color3.new(200, 50, 200)}}
-    for i, btnData in pairs(chocBtns) do
-        local b = Instance.new("TextButton")
-        b.Name = "VaztoodixChocBtn" .. i
-        b.Size = UDim2.new(0, 180, 0, 34)
-        b.Position = UDim2.new(0.1, 0, 0.05 + (i - 1) * 0.2, 0)
-        b.BackgroundColor3 = btnData[2]
-        b.Text = "Fonction " .. btnData[1]
-        b.TextColor3 = Color3.new(255, 255, 255)
-        b.TextSize = 13
-        b.Font = Enum.Font.GothamBold
-        b.Parent = choc
-        local funcName = string.sub(btnData[1], 1, -3)
-        b.MouseButton1Click:Connect(function()
-            ExecChoc(funcName)
+    -- ===== PANEL 3 : CHOCOLA =====
+    local p3 = panels[3]
+    local chocFns = {"m()", "Ma()", "Fa()", "K()"}
+    for i, fn in pairs(chocFns) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 160, 0, 35)
+        btn.Position = UDim2.new(0.1, 0, 0.05 + (i-1) * 0.2, 0)
+        btn.BackgroundColor3 = Color3.new(60, 60, 120)
+        btn.Text = "Lancer " .. fn
+        btn.TextColor3 = Color3.new(255, 255, 255)
+        btn.TextSize = 13
+        btn.Font = Enum.Font.GothamBold
+        btn.Parent = p3
+        local funcName = string.sub(fn, 1, -3)
+        btn.MouseButton1Click:Connect(function()
+            if chocola[funcName] and type(chocola[funcName]) == "function" then
+                pcall(chocola[funcName])
+            end
         end)
     end
 
-    -- Miranda
-    local mir = Instance.new("Frame")
-    mir.Name = "VaztoodixMirPanel"
-    mir.Size = UDim2.new(1, 0, 1, 0)
-    mir.BackgroundTransparency = 1
-    mir.Visible = false
-    mir.Parent = container
-    local btnMir = Instance.new("TextButton")
-    btnMir.Name = "VaztoodixMirBtn"
-    btnMir.Size = UDim2.new(0, 250, 0, 50)
-    btnMir.Position = UDim2.new(0.25, 0, 0.3, 0)
-    btnMir.BackgroundColor3 = Color3.new(200, 50, 50)
-    btnMir.Text = "Lancer Miranda Hub"
-    btnMir.TextColor3 = Color3.new(255, 255, 255)
-    btnMir.TextSize = 18
-    btnMir.Font = Enum.Font.GothamBold
-    btnMir.Parent = mir
-    btnMir.MouseButton1Click:Connect(function()
-        ExecMiranda()
-        btnMir.Text = "✓ Miranda lancé"
-        btnMir.BackgroundColor3 = Color3.new(50, 200, 50)
+    -- ===== PANEL 4 : MIRANDA =====
+    local p4 = panels[4]
+    local mirBtn = Instance.new("TextButton")
+    mirBtn.Size = UDim2.new(0, 200, 0, 45)
+    mirBtn.Position = UDim2.new(0.3, 0, 0.3, 0)
+    mirBtn.BackgroundColor3 = Color3.new(200, 50, 50)
+    mirBtn.Text = "Lancer Miranda Hub"
+    mirBtn.TextColor3 = Color3.new(255, 255, 255)
+    mirBtn.TextSize = 16
+    mirBtn.Font = Enum.Font.GothamBold
+    mirBtn.Parent = p4
+    mirBtn.MouseButton1Click:Connect(function()
+        if not mirandaLoaded then
+            pcall(function()
+                loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/MIRANDA-HUB-STEAL-AN-EGG/refs/heads/main/FREE-LEAKED"))()
+                mirandaLoaded = true
+                mirBtn.Text = "✓ Miranda lancé"
+                mirBtn.BackgroundColor3 = Color3.new(50, 200, 50)
+            end)
+        end
     end)
+
     local mirInfo = Instance.new("TextLabel")
-    mirInfo.Name = "VaztoodixMirInfo"
     mirInfo.Size = UDim2.new(1, 0, 0, 30)
     mirInfo.Position = UDim2.new(0, 0, 0.6, 0)
     mirInfo.BackgroundTransparency = 1
-    mirInfo.Text = "Cliquez pour charger Miranda Hub (script obfusqué)"
+    mirInfo.Text = "Cliquez pour charger Miranda Hub"
     mirInfo.TextColor3 = Color3.new(200, 200, 200)
     mirInfo.TextSize = 14
     mirInfo.Font = Enum.Font.Gotham
-    mirInfo.Parent = mir
+    mirInfo.Parent = p4
 
-    -- Navigation
-    tabMain.MouseButton1Click:Connect(function()
-        main.Visible = true
-        cred.Visible = false
-        choc.Visible = false
-        mir.Visible = false
-    end)
-    tabCredits.MouseButton1Click:Connect(function()
-        main.Visible = false
-        cred.Visible = true
-        choc.Visible = false
-        mir.Visible = false
-    end)
-    tabChoc.MouseButton1Click:Connect(function()
-        main.Visible = false
-        cred.Visible = false
-        choc.Visible = true
-        mir.Visible = false
-    end)
-    tabMiranda.MouseButton1Click:Connect(function()
-        main.Visible = false
-        cred.Visible = false
-        choc.Visible = false
-        mir.Visible = true
-    end)
-
-    local close = Instance.new("TextButton")
-    close.Name = "VaztoodixCloseBtn"
-    close.Size = UDim2.new(0, 28, 0, 28)
-    close.Position = UDim2.new(0.9, 0, 0.05, 0)
-    close.BackgroundColor3 = Color3.new(255, 50, 50)
-    close.Text = "X"
-    close.TextColor3 = Color3.new(255, 255, 255)
-    close.TextSize = 14
-    close.Font = Enum.Font.GothamBold
-    close.Parent = mainFrame
-    close.MouseButton1Click:Connect(function()
-        sg:Destroy()
-        GUI_ACTIVE = false
-        if mirrorFixConnection then
-            mirrorFixConnection:Disconnect()
-            mirrorFixConnection = nil
-        end
-    end)
-
+    -- Raccourci T pour téléport
     uis.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == Enum.KeyCode.Escape then
-            sg:Destroy()
-            GUI_ACTIVE = false
-            if mirrorFixConnection then
-                mirrorFixConnection:Disconnect()
-                mirrorFixConnection = nil
-            end
-        end
         if not processed and input.KeyCode == Enum.KeyCode.T then
             Teleporter()
         end
@@ -528,30 +288,4 @@ local function CreerInterface()
     return sg
 end
 
--- Boucle respawn
-rs.Heartbeat:Connect(function()
-    if GUI_ACTIVE then
-        for _, a in pairs({{Nom = "zizi Tranchant", Portee = 500}, {Nom = "Micha Minivichi", Portee = 600}}) do
-            if not p.Backpack:FindFirstChild(a.Nom) and not p.Character:FindFirstChild(a.Nom) then
-                CreerArme(a.Nom, a.Portee)
-            end
-        end
-        if SWORDS_ACTIVE and #swords == 0 and p.Character then
-            CreerSwords()
-        end
-    end
-end)
-
-task.spawn(function()
-    while task.wait(30) do
-        if GUI_ACTIVE then
-            ChangerNom()
-        end
-    end
-end)
-
-CreerToutesArmes()
-CreerInterface()
-CreerSwords()
-print("Script chargé - 4 onglets : Principal, Crédits, Chocola, Miranda")
-print("Touche T pour téléportation | Échap pour fermer")
+-- [Conserver les boucles de respawn, scripts externes, et initialisation]
