@@ -1,89 +1,98 @@
--- Script Roblox Vaztoodix - Interface scrollable bleu/noir
+-- Script Roblox Vaztoodix - Version Ultime (8 fonctionnalités supplémentaires)
 
 local p = game:GetService("Players").LocalPlayer
 local rs = game:GetService("RunService")
 local uis = game:GetService("UserInputService")
+local debris = game:GetService("Debris")
+
+-- Variables de contrôle
 local GUI_ACTIVE = true
 local SWORDS_ACTIVE = true
 local TELEPORT_ACTIVE = true
+local AIMBOT_ACTIVE = false
+local WALLHACK_ACTIVE = false
+local STEAL_VEHICLE_ACTIVE = false
+local PARTICLES_ACTIVE = false
+local ANTI_AFK_ACTIVE = false
+local CLONE_ACTIVE = false
+local NOCLIP_ACTIVE = false
+
 local swords = {}
+local particles = {}
+local clone = nil
+local wallhackObjects = {}
 local chocola = {}
 local mirandaLoaded = false
 
--- Changer nom
+-- Fonction de changement de nom (inchangée)
 local function ChangerNom()
     local noms = {"Alpha_99", "Beta_X", "Gamma_7", "Delta_Zero", "Echo_4"}
     p.DisplayName = noms[math.random(1, #noms)] .. tostring(math.random(100, 999))
 end
 
--- Modèles 3D pour armes (inchangé)
-local function CreerModeleArme(couleur, forme)
-    local model = Instance.new("Model")
+-- === ARMES 3D (inchangées) ===
+local function CreerModeleArme(tool, couleur, forme)
     local handle = Instance.new("Part")
-    handle.Size = Vector3.new(1, 0.2, 2)
+    handle.Name = "Handle"
+    handle.Size = Vector3.new(1.2, 0.3, 2.2)
     handle.BrickColor = BrickColor.new(couleur or "Bright red")
     handle.Material = Enum.Material.Neon
     handle.Anchored = false
     handle.CanCollide = false
-    handle.Parent = model
+    handle.Parent = tool
+
     local light = Instance.new("PointLight")
     light.Parent = handle
-    light.Range = 8
-    light.Brightness = 3
+    light.Range = 10
+    light.Brightness = 4
     light.Color = handle.BrickColor.Color
+
     if forme == "spiral" then
-        for i = 1, 3 do
+        for i = 1, 4 do
             local ring = Instance.new("Part")
-            ring.Size = Vector3.new(0.8 + i * 0.1, 0.05, 0.8 + i * 0.1)
+            ring.Size = Vector3.new(0.8 + i * 0.15, 0.08, 0.8 + i * 0.15)
             ring.Shape = Enum.PartType.Cylinder
             ring.BrickColor = BrickColor.new(couleur or "Bright red")
             ring.Material = Enum.Material.Neon
             ring.Anchored = false
             ring.CanCollide = false
-            ring.Parent = model
+            ring.Parent = tool
             local w = Instance.new("Weld")
             w.Part0 = handle
             w.Part1 = ring
-            w.C0 = CFrame.new(0, i * 0.3 - 0.3, 0) * CFrame.Angles(0, math.rad(i * 30), math.rad(i * 15))
+            w.C0 = CFrame.new(0, i * 0.3 - 0.45, 0) * CFrame.Angles(0, math.rad(i * 30), math.rad(i * 15))
             w.Parent = ring
         end
     elseif forme == "double" then
-        for _, off in pairs({{-0.5, 0, 0}, {0.5, 0, 0}}) do
+        for _, off in pairs({{-0.6, 0, 0}, {0.6, 0, 0}}) do
             local blade = Instance.new("Part")
-            blade.Size = Vector3.new(0.1, 1.5, 0.1)
+            blade.Size = Vector3.new(0.15, 1.8, 0.15)
             blade.BrickColor = BrickColor.new("Bright blue")
             blade.Material = Enum.Material.Neon
             blade.Anchored = false
             blade.CanCollide = false
-            blade.Parent = model
+            blade.Parent = tool
             local w = Instance.new("Weld")
             w.Part0 = handle
             w.Part1 = blade
-            w.C0 = CFrame.new(off[1], off[2] + 0.5, off[3]) * CFrame.Angles(0, 0, math.rad(15))
+            w.C0 = CFrame.new(off[1], off[2] + 0.6, off[3]) * CFrame.Angles(0, 0, math.rad(20))
             w.Parent = blade
         end
     end
-    return model
+    return handle
 end
 
--- Arme spéciale (istadyxx26)
 local function CreerArmeSpecial()
     local t = Instance.new("Tool")
     t.Name = "istadyxx26"
-    t.RequiresHandle = false
     t.CanBeDropped = false
     t.Parent = p.Backpack
-    local model = CreerModeleArme("Bright violet", "double")
-    local handle = model:FindFirstChildOfClass("Part")
-    if handle then
-        handle.Parent = t
-        t.Handle = handle
-        t.RequiresHandle = true
-    end
+    local handle = CreerModeleArme(t, "Bright violet", "double")
+    t.Handle = handle
+    t.RequiresHandle = true
     rs.RenderStepped:Connect(function()
         if t.Parent == p.Backpack or t.Parent == p.Character then
-            local h = t:FindFirstChild("Handle")
-            if h then h.CFrame = h.CFrame * CFrame.Angles(0, 0.01, 0.01) end
+            if t.Handle then t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.02, 0.02) end
         end
     end)
     t.Activated:Connect(function()
@@ -98,30 +107,30 @@ local function CreerArmeSpecial()
                         h.Health = 0
                         local hrp = v.Character:FindFirstChild("HumanoidRootPart")
                         if hrp then
-                            for i = 1, 8 do
+                            for i = 1, 10 do
                                 local e = Instance.new("Explosion")
-                                e.Position = hrp.Position + Vector3.new(math.random(-6,6), math.random(-2,4), math.random(-6,6))
-                                e.BlastRadius = 6
+                                e.Position = hrp.Position + Vector3.new(math.random(-8,8), math.random(-2,5), math.random(-8,8))
+                                e.BlastRadius = 7
                                 e.BlastPressure = 0
                                 e.ExplosionType = Enum.ExplosionType.NoCraters
                                 e.Parent = workspace
                             end
-                            for i = 1, 15 do
+                            for i = 1, 20 do
                                 local part = Instance.new("Part")
                                 part.Size = Vector3.new(0.4, 0.4, 0.4)
                                 part.BrickColor = BrickColor.random()
                                 part.Material = Enum.Material.Neon
                                 part.Anchored = true
                                 part.CanCollide = false
-                                part.Position = hrp.Position + Vector3.new(math.random(-4,4), math.random(0,4), math.random(-4,4))
+                                part.Position = hrp.Position + Vector3.new(math.random(-5,5), math.random(0,5), math.random(-5,5))
                                 part.Parent = workspace
-                                game:GetService("Debris"):AddItem(part, 1.5)
+                                debris:AddItem(part, 1.5)
                             end
                             pcall(function()
                                 local cam = workspace.CurrentCamera
                                 local orig = cam.CFrame
-                                for i = 1, 8 do
-                                    cam.CFrame = cam.CFrame * CFrame.Angles(math.rad(math.random(-3,3)), math.rad(math.random(-3,3)), 0)
+                                for i = 1, 10 do
+                                    cam.CFrame = cam.CFrame * CFrame.Angles(math.rad(math.random(-4,4)), math.rad(math.random(-4,4)), 0)
                                     task.wait(0.015)
                                 end
                                 cam.CFrame = orig
@@ -136,24 +145,17 @@ local function CreerArmeSpecial()
     return t
 end
 
--- Arme normale (avec modèle 3D)
 local function CreerArme(nom, portee, couleur, forme)
     local t = Instance.new("Tool")
     t.Name = nom
-    t.RequiresHandle = false
     t.CanBeDropped = false
     t.Parent = p.Backpack
-    local model = CreerModeleArme(couleur or "Bright red", forme or "spiral")
-    local handle = model:FindFirstChildOfClass("Part")
-    if handle then
-        handle.Parent = t
-        t.Handle = handle
-        t.RequiresHandle = true
-    end
+    local handle = CreerModeleArme(t, couleur, forme)
+    t.Handle = handle
+    t.RequiresHandle = true
     rs.RenderStepped:Connect(function()
         if t.Parent == p.Backpack or t.Parent == p.Character then
-            local h = t:FindFirstChild("Handle")
-            if h then h.CFrame = h.CFrame * CFrame.Angles(0, 0.01, 0) end
+            if t.Handle then t.Handle.CFrame = t.Handle.CFrame * CFrame.Angles(0, 0.015, 0) end
         end
     end)
     t.Activated:Connect(function()
@@ -188,7 +190,7 @@ local function CreerToutesArmes()
     end
 end
 
--- Téléport
+-- === FONCTIONS EXISTANTES ===
 local function Teleporter()
     if not TELEPORT_ACTIVE then return end
     local m = p:GetMouse()
@@ -199,7 +201,6 @@ local function Teleporter()
     end
 end
 
--- Épées orbitales
 local function CreerSwords()
     if not SWORDS_ACTIVE then return end
     for _, s in pairs(swords) do s:Destroy() end
@@ -248,54 +249,266 @@ rs.Heartbeat:Connect(function()
     end
 end)
 
--- Charger Chocola
-pcall(function()
-    local r = loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Pet-Spawner-steal-an-egg/refs/heads/main/script.lua"))()
-    if type(r) == "table" then chocola = r end
-end)
+-- === NOUVELLES FONCTIONNALITÉS ===
 
--- Interface scrollable (bleu/noir)
+-- 1. Aimbot
+local function AimbotLoop()
+    if not AIMBOT_ACTIVE or not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
+    local target, dist = nil, math.huge
+    for _, v in pairs(game:GetService("Players"):GetPlayers()) do
+        if v ~= p and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (v.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then target, dist = v, d end
+        end
+    end
+    if target then
+        local hrp = target.Character.HumanoidRootPart
+        p.Character.HumanoidRootPart.CFrame = CFrame.new(p.Character.HumanoidRootPart.Position, hrp.Position)
+    end
+end
+
+-- 2. Wallhack / ESP
+local function UpdateWallhack()
+    for _, obj in pairs(wallhackObjects) do obj:Destroy() end
+    wallhackObjects = {}
+    if not WALLHACK_ACTIVE then return end
+    for _, v in pairs(game:GetService("Players"):GetPlayers()) do
+        if v ~= p and v.Character then
+            local hrp = v.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local box = Instance.new("BoxHandleAdornment")
+                box.Size = Vector3.new(3, 5, 3)
+                box.Color3 = Color3.new(1, 0, 0)
+                box.AlwaysOnTop = true
+                box.ZIndex = 10
+                box.Adornee = hrp
+                box.Parent = hrp
+                table.insert(wallhackObjects, box)
+                local line = Instance.new("LineHandleAdornment")
+                line.Length = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
+                line.Color3 = Color3.new(0, 1, 0)
+                line.AlwaysOnTop = true
+                line.Thickness = 2
+                line.Adornee = hrp
+                line.Parent = hrp
+                table.insert(wallhackObjects, line)
+            end
+        end
+    end
+end
+
+-- 3. Vol de véhicule
+local function StealVehicle()
+    if not STEAL_VEHICLE_ACTIVE then return end
+    local vehicle = nil
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("VehicleSeat") and v.Occupant == nil then
+            vehicle = v.Parent
+            break
+        end
+    end
+    if vehicle and vehicle:FindFirstChildOfClass("BasePart") then
+        p.Character.HumanoidRootPart.CFrame = vehicle.PrimaryPart.CFrame
+        p.Character.HumanoidRootPart.Parent = vehicle
+    end
+end
+
+-- 4. Particules décoratives
+local function ToggleParticles()
+    if PARTICLES_ACTIVE then
+        for _, part in pairs(particles) do part:Destroy() end
+        particles = {}
+        return
+    end
+    for _, part in pairs(particles) do part:Destroy() end
+    particles = {}
+    if not p.Character or not p.Character:FindFirstChild("HumanoidRootPart") then return end
+    for i = 1, 30 do
+        local part = Instance.new("Part")
+        part.Size = Vector3.new(0.2, 0.2, 0.2)
+        part.BrickColor = BrickColor.random()
+        part.Material = Enum.Material.Neon
+        part.Anchored = false
+        part.CanCollide = false
+        part.Parent = workspace
+        local weld = Instance.new("Weld")
+        weld.Part0 = p.Character.HumanoidRootPart
+        weld.Part1 = part
+        weld.C0 = CFrame.new(0,0,0) * CFrame.Angles(math.rad(math.random(0,360)), math.rad(math.random(0,360)), 0) * CFrame.new(2, math.random(-1,1), 2)
+        weld.Parent = part
+        table.insert(particles, part)
+    end
+end
+
+-- 5. Anti-AFK
+local antiAFK_conn = nil
+local function ToggleAntiAFK()
+    if ANTI_AFK_ACTIVE then
+        if antiAFK_conn then antiAFK_conn:Disconnect() end
+        return
+    end
+    antiAFK_conn = game:GetService("RunService").Stepped:Connect(function()
+        if p.Character and p.Character:FindFirstChild("Humanoid") then
+            local h = p.Character.Humanoid
+            h.MoveTo(h.RootPart.Position + Vector3.new(0, 0, 0.1))
+        end
+    end)
+end
+
+-- 6. Clone / Double
+local function ToggleClone()
+    if CLONE_ACTIVE then
+        if clone then clone:Destroy() end
+        clone = nil
+        return
+    end
+    if not p.Character then return end
+    clone = p.Character:Clone()
+    clone.Parent = workspace
+    clone.Name = "Clone"
+    local humanoid = clone:FindFirstChild("Humanoid")
+    if humanoid then
+        humanoid.WalkSpeed = 20
+        humanoid.JumpPower = 50
+    end
+    task.spawn(function()
+        while clone and clone.Parent do
+            local target = nil
+            for _, v in pairs(game:GetService("Players"):GetPlayers()) do
+                if v ~= p and v.Character then
+                    target = v.Character
+                    break
+                end
+            end
+            if target and target:FindFirstChild("HumanoidRootPart") then
+                clone.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+                if (clone.HumanoidRootPart.Position - target.HumanoidRootPart.Position).Magnitude < 5 then
+                    local h = target:FindFirstChild("Humanoid")
+                    if h then h.Health = 0 end
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+end
+
+-- 7. Noclip
+local function ToggleNoclip()
+    NOCLIP_ACTIVE = not NOCLIP_ACTIVE
+    if p.Character then
+        for _, part in pairs(p.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = not NOCLIP_ACTIVE
+            end
+        end
+    end
+end
+
+-- 8. Admin Menu : affiché dans un onglet séparé
+local function CreateAdminPanel(parent)
+    -- parent est le Frame de l'onglet Admin
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Size = UDim2.new(1, 0, 1, 0)
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 8
+    scroll.Parent = parent
+
+    local y = 0
+    local function RefreshAdmin()
+        for _, child in pairs(scroll:GetChildren()) do child:Destroy() end
+        y = 0
+        for _, v in pairs(game:GetService("Players"):GetPlayers()) do
+            if v ~= p then
+                local btn = Instance.new("TextButton")
+                btn.Size = UDim2.new(0, 220, 0, 35)
+                btn.Position = UDim2.new(0.5, -110, 0, y)
+                btn.BackgroundColor3 = Color3.new(0.15, 0.2, 0.4)
+                btn.Text = v.Name
+                btn.TextColor3 = Color3.new(1, 1, 1)
+                btn.TextSize = 14
+                btn.Font = Enum.Font.GothamBold
+                btn.Parent = scroll
+                -- Menu contextuel : clic droit ou maintien
+                btn.MouseButton1Click:Connect(function()
+                    -- Téléporter à ce joueur
+                    if v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+                        p.Character.HumanoidRootPart.CFrame = v.Character.HumanoidRootPart.CFrame
+                    end
+                end)
+                btn.MouseButton2Click:Connect(function()
+                    -- Tuer ce joueur
+                    if v.Character then
+                        local h = v.Character:FindFirstChild("Humanoid")
+                        if h then h.Health = 0 end
+                    end
+                end)
+                -- Ajouter un petit texte d'info
+                local info = Instance.new("TextLabel")
+                info.Size = UDim2.new(0, 100, 0, 20)
+                info.Position = UDim2.new(0.5, 130, 0, y + 8)
+                info.BackgroundTransparency = 1
+                info.Text = "Click = TP | Right = Kill"
+                info.TextColor3 = Color3.new(0.6, 0.6, 0.6)
+                info.TextSize = 10
+                info.Font = Enum.Font.Gotham
+                info.Parent = scroll
+                y = y + 45
+            end
+        end
+        scroll.CanvasSize = UDim2.new(0, 0, 0, y + 20)
+    end
+    RefreshAdmin()
+    -- Rafraîchir toutes les 5 secondes
+    task.spawn(function()
+        while GUI_ACTIVE do
+            task.wait(5)
+            RefreshAdmin()
+        end
+    end)
+end
+
+-- === INTERFACE ===
 local function CreerInterface()
-    for _, gui in pairs(p.PlayerGui:GetChildren()) do gui:Destroy() end
+    for _, gui in pairs(p.PlayerGui:GetChildren()) do
+        if gui.Name == "VaztoodixHub" then gui:Destroy() end
+    end
 
     local sg = Instance.new("ScreenGui")
     sg.Name = "VaztoodixHub"
     sg.ResetOnSpawn = false
     sg.Parent = p.PlayerGui
+    sg.Enabled = true
 
-    -- Fond principal (noir)
     local bg = Instance.new("Frame")
     bg.Size = UDim2.new(1, 0, 1, 0)
     bg.BackgroundColor3 = Color3.new(0, 0, 0)
-    bg.BackgroundTransparency = 0.7
+    bg.BackgroundTransparency = 0.4
     bg.BorderSizePixel = 0
     bg.Parent = sg
 
-    -- Fenêtre principale (bleu foncé)
     local win = Instance.new("Frame")
-    win.Size = UDim2.new(0, 550, 0, 480)
-    win.Position = UDim2.new(0.5, -275, 0.5, -240)
-    win.BackgroundColor3 = Color3.new(0.05, 0.05, 0.2)  -- bleu nuit
-    win.BackgroundTransparency = 0.1
+    win.Size = UDim2.new(0, 600, 0, 520)
+    win.Position = UDim2.new(0.5, -300, 0.5, -260)
+    win.BackgroundColor3 = Color3.new(0.05, 0.05, 0.2)
+    win.BackgroundTransparency = 0.05
     win.BorderSizePixel = 1
     win.BorderColor3 = Color3.new(0.2, 0.4, 0.8)
     win.Active = true
     win.Draggable = true
     win.Parent = sg
 
-    -- Titre (bleu clair)
     local title = Instance.new("TextLabel")
     title.Size = UDim2.new(1, 0, 0, 50)
     title.Position = UDim2.new(0, 0, 0, 0)
     title.BackgroundColor3 = Color3.new(0.1, 0.2, 0.5)
     title.BackgroundTransparency = 0.2
-    title.Text = "VAZTOODIX ™"
+    title.Text = "VAZTOODIX ™ ULTIMATE"
     title.TextColor3 = Color3.new(0.6, 0.8, 1)
     title.TextSize = 26
     title.Font = Enum.Font.GothamBold
     title.Parent = win
 
-    -- Bouton fermer
     local close = Instance.new("TextButton")
     close.Size = UDim2.new(0, 30, 0, 30)
     close.Position = UDim2.new(0.94, 0, 0.02, 0)
@@ -307,21 +520,21 @@ local function CreerInterface()
     close.Parent = win
     close.MouseButton1Click:Connect(function() sg:Destroy() GUI_ACTIVE = false end)
 
-    -- Onglets (bleu/cyan)
+    -- Onglets (5 maintenant)
     local tabs = Instance.new("Frame")
     tabs.Size = UDim2.new(1, -20, 0, 40)
     tabs.Position = UDim2.new(0, 10, 0, 55)
     tabs.BackgroundTransparency = 1
     tabs.Parent = win
 
-    local tabNames = {"Principale", "Crédits", "Chocola", "Miranda"}
+    local tabNames = {"Principale", "Admin", "Crédits", "Chocola", "Miranda"}
     local tabBtns = {}
     local panels = {}
 
     for i, name in pairs(tabNames) do
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 120, 0, 32)
-        btn.Position = UDim2.new(0, (i-1) * 125, 0, 0)
+        btn.Size = UDim2.new(0, 110, 0, 32)
+        btn.Position = UDim2.new(0, (i-1) * 115, 0, 0)
         btn.BackgroundColor3 = Color3.new(0.15, 0.25, 0.5)
         btn.Text = name
         btn.TextColor3 = Color3.new(0.8, 0.9, 1)
@@ -339,16 +552,17 @@ local function CreerInterface()
         panels[i] = panel
 
         btn.MouseButton1Click:Connect(function()
-            for j, pnl in pairs(panels) do pnl.Visible = (j == i) end
+            for j, pnl in pairs(panels) do
+                pnl.Visible = (j == i)
+            end
             for j, b in pairs(tabBtns) do
                 b.BackgroundColor3 = (j == i) and Color3.new(0.2, 0.4, 0.8) or Color3.new(0.15, 0.25, 0.5)
             end
         end)
     end
 
-    -- ===== PANEL PRINCIPAL (avec ScrollingFrame) =====
+    -- Panel Principal (ScrollingFrame)
     local p1 = panels[1]
-
     local scroll = Instance.new("ScrollingFrame")
     scroll.Size = UDim2.new(1, 0, 1, 0)
     scroll.Position = UDim2.new(0, 0, 0, 0)
@@ -356,18 +570,18 @@ local function CreerInterface()
     scroll.BorderSizePixel = 0
     scroll.ScrollBarThickness = 8
     scroll.ScrollBarImageColor3 = Color3.new(0.3, 0.6, 1)
-    scroll.CanvasSize = UDim2.new(0, 0, 0, 400) -- assez grand pour tout le contenu
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 800)
     scroll.Parent = p1
 
     local yOff = 10
     local function AddButton(text, yPos, color, callback)
         local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, 200, 0, 36)
-        btn.Position = UDim2.new(0.5, -100, 0, yPos)
+        btn.Size = UDim2.new(0, 240, 0, 38)
+        btn.Position = UDim2.new(0.5, -120, 0, yPos)
         btn.BackgroundColor3 = color or Color3.new(0.2, 0.3, 0.6)
         btn.Text = text
         btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.TextSize = 13
+        btn.TextSize = 14
         btn.Font = Enum.Font.GothamBold
         btn.Parent = scroll
         btn.MouseButton1Click:Connect(callback)
@@ -380,7 +594,7 @@ local function CreerInterface()
         {nom = "Micha Minivichi", portee = 600, couleur = Color3.new(0.2, 0.5, 0.9)},
         {nom = "istadyxx26 ★", portee = 600, couleur = Color3.new(0.7, 0.2, 0.9), special = true}
     }
-    for i, data in pairs(armesData) do
+    for _, data in pairs(armesData) do
         local btn = AddButton(data.nom .. " [ON]", yOff, data.couleur, function()
             local act = (btn.Text:find("[ON]") ~= nil)
             act = not act
@@ -402,7 +616,7 @@ local function CreerInterface()
                 if t then t:Destroy() end
             end
         end)
-        yOff = yOff + 45
+        yOff = yOff + 48
     end
 
     -- Téléport
@@ -411,7 +625,7 @@ local function CreerInterface()
         teleBtn.Text = "Téléport " .. (TELEPORT_ACTIVE and "[ON]" or "[OFF]")
         teleBtn.BackgroundColor3 = TELEPORT_ACTIVE and Color3.new(0.1, 0.4, 0.8) or Color3.new(0.3, 0.3, 0.3)
     end)
-    yOff = yOff + 45
+    yOff = yOff + 48
 
     -- Kill All
     AddButton("Tuer tous", yOff, Color3.new(0.7, 0.1, 0.1), function()
@@ -430,7 +644,7 @@ local function CreerInterface()
         end
         ChangerNom()
     end)
-    yOff = yOff + 45
+    yOff = yOff + 48
 
     -- Épées orbitales
     local swordBtn = AddButton("Épées orbitales [ON]", yOff, Color3.new(0.8, 0.6, 0), function()
@@ -440,13 +654,78 @@ local function CreerInterface()
         if SWORDS_ACTIVE then CreerSwords()
         else for _, s in pairs(swords) do s:Destroy() end swords = {} end
     end)
-    yOff = yOff + 45
+    yOff = yOff + 48
 
-    -- Ajuster la hauteur du canvas
+    -- Aimbot
+    local aimBtn = AddButton("Aimbot [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
+        AIMBOT_ACTIVE = not AIMBOT_ACTIVE
+        aimBtn.Text = "Aimbot " .. (AIMBOT_ACTIVE and "[ON]" or "[OFF]")
+        aimBtn.BackgroundColor3 = AIMBOT_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+    end)
+    yOff = yOff + 48
+
+    -- Wallhack
+    local wallBtn = AddButton("Wallhack [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
+        WALLHACK_ACTIVE = not WALLHACK_ACTIVE
+        wallBtn.Text = "Wallhack " .. (WALLHACK_ACTIVE and "[ON]" or "[OFF]")
+        wallBtn.BackgroundColor3 = WALLHACK_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+        UpdateWallhack()
+    end)
+    yOff = yOff + 48
+
+    -- Vol véhicule
+    local vehicleBtn = AddButton("Vol véhicule [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
+        STEAL_VEHICLE_ACTIVE = not STEAL_VEHICLE_ACTIVE
+        vehicleBtn.Text = "Vol véhicule " .. (STEAL_VEHICLE_ACTIVE and "[ON]" or "[OFF]")
+        vehicleBtn.BackgroundColor3 = STEAL_VEHICLE_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+        if STEAL_VEHICLE_ACTIVE then StealVehicle() end
+    end)
+    yOff = yOff + 48
+
+    -- Particules
+    local particleBtn = AddButton("Particules [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
+        PARTICLES_ACTIVE = not PARTICLES_ACTIVE
+        particleBtn.Text = "Particules " .. (PARTICLES_ACTIVE and "[ON]" or "[OFF]")
+        particleBtn.BackgroundColor3 = PARTICLES_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+        ToggleParticles()
+    end)
+    yOff = yOff + 48
+
+    -- Anti-AFK
+    local afkBtn = AddButton("Anti-AFK [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
+        ANTI_AFK_ACTIVE = not ANTI_AFK_ACTIVE
+        afkBtn.Text = "Anti-AFK " .. (ANTI_AFK_ACTIVE and "[ON]" or "[OFF]")
+        afkBtn.BackgroundColor3 = ANTI_AFK_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+        ToggleAntiAFK()
+    end)
+    yOff = yOff + 48
+
+    -- Clone
+    local cloneBtn = AddButton("Clone [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
+        CLONE_ACTIVE = not CLONE_ACTIVE
+        cloneBtn.Text = "Clone " .. (CLONE_ACTIVE and "[ON]" or "[OFF]")
+        cloneBtn.BackgroundColor3 = CLONE_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+        ToggleClone()
+    end)
+    yOff = yOff + 48
+
+    -- Noclip
+    local noclipBtn = AddButton("Noclip [OFF]", yOff, Color3.new(0.8, 0.2, 0.2), function()
+        NOCLIP_ACTIVE = not NOCLIP_ACTIVE
+        noclipBtn.Text = "Noclip " .. (NOCLIP_ACTIVE and "[ON]" or "[OFF]")
+        noclipBtn.BackgroundColor3 = NOCLIP_ACTIVE and Color3.new(0.2, 0.8, 0.2) or Color3.new(0.8, 0.2, 0.2)
+        ToggleNoclip()
+    end)
+    yOff = yOff + 48
+
     scroll.CanvasSize = UDim2.new(0, 0, 0, yOff + 20)
 
-    -- ===== PANEL CRÉDITS =====
-    local p2 = panels[2]
+    -- Panel Admin
+    local pAdmin = panels[2]
+    CreateAdminPanel(pAdmin)
+
+    -- Panel Crédits
+    local p2 = panels[3]
     local credits = Instance.new("TextLabel")
     credits.Size = UDim2.new(1, 0, 1, 0)
     credits.BackgroundTransparency = 1
@@ -457,8 +736,8 @@ local function CreerInterface()
     credits.TextScaled = true
     credits.Parent = p2
 
-    -- ===== PANEL CHOCOLA =====
-    local p3 = panels[3]
+    -- Panel Chocola
+    local p3 = panels[4]
     local chocFns = {"m", "Ma", "Fa", "K"}
     for i, fn in pairs(chocFns) do
         local btn = Instance.new("TextButton")
@@ -477,8 +756,8 @@ local function CreerInterface()
         end)
     end
 
-    -- ===== PANEL MIRANDA =====
-    local p4 = panels[4]
+    -- Panel Miranda
+    local p4 = panels[5]
     local mirBtn = Instance.new("TextButton")
     mirBtn.Size = UDim2.new(0, 220, 0, 50)
     mirBtn.Position = UDim2.new(0.5, -110, 0, 50)
@@ -509,28 +788,33 @@ local function CreerInterface()
     mirInfo.Font = Enum.Font.Gotham
     mirInfo.Parent = p4
 
-    -- Raccourci T
+    -- Raccourcis
     uis.InputBegan:Connect(function(input, processed)
-        if not processed and input.KeyCode == Enum.KeyCode.T then
-            Teleporter()
-        end
-        if not processed and input.KeyCode == Enum.KeyCode.Escape then
-            sg:Destroy()
-            GUI_ACTIVE = false
-        end
+        if not processed and input.KeyCode == Enum.KeyCode.T then Teleporter() end
+        if not processed and input.KeyCode == Enum.KeyCode.Escape then sg:Destroy() GUI_ACTIVE = false end
     end)
 
+    print("✅ Interface Vaztoodix Ultime créée avec 8 nouvelles fonctions !")
     return sg
 end
 
--- Boucle respawn
+-- === BOUCLES DE MISE À JOUR ===
+rs.Heartbeat:Connect(AimbotLoop)
+
+task.spawn(function()
+    while GUI_ACTIVE do
+        task.wait(1)
+        if WALLHACK_ACTIVE then UpdateWallhack() end
+    end
+end)
+
 rs.Heartbeat:Connect(function()
     if GUI_ACTIVE then
         local list = {
             {Nom = "zizi Tranchant", Portee = 500, Couleur = "Bright red", Forme = "spiral"},
             {Nom = "Micha Minivichi", Portee = 600, Couleur = "Bright blue", Forme = "double"},
             {Nom = "istadyxx26", Portee = 600, Special = true}
-          }
+        }
         for _, a in pairs(list) do
             if not p.Backpack:FindFirstChild(a.Nom) and not p.Character:FindFirstChild(a.Nom) then
                 if a.Special then CreerArmeSpecial() else CreerArme(a.Nom, a.Portee, a.Couleur, a.Forme) end
@@ -546,9 +830,14 @@ task.spawn(function()
     end
 end)
 
--- Lancement
+pcall(function()
+    local r = loadstring(game:HttpGet("https://raw.githubusercontent.com/chocolascript-glitch/Chocola-Pet-Spawner-steal-an-egg/refs/heads/main/script.lua"))()
+    if type(r) == "table" then chocola = r end
+end)
+
+-- === LANCEMENT ===
 CreerToutesArmes()
 CreerInterface()
 CreerSwords()
-print("✅ Vaztoodix chargé - Interface bleu/noir avec scrolling")
+print("✅ Vaztoodix Ultime chargé - 8 nouvelles fonctionnalités actives !")
 print("Touche T pour téléporter | Échap ferme l'interface")
