@@ -1,18 +1,14 @@
 --[[
     AntonioHub v2.0 – Interface admin universelle Roblox
-    Améliorations : barre de recherche, onglets dynamiques, commandes avancées,
-    suggestions automatiques, historique des commandes, thème personnalisable.
-    Basé sur les principes de Infinite Yield, HD Admin et Nexus Admin.
+    Version tactile – Compatible Delta Executor / Solar V3
+    Ouverture via bouton flottant "Menu" (écran tactile)
 ]]
-
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
 local LocalPlayer = Players.LocalPlayer
 
--- === VARIABLES GLOBALES ===
 local AntonioHub = {
     GUI = nil,
     MainFrame = nil,
@@ -21,18 +17,49 @@ local AntonioHub = {
     Minimized = false,
     Dragging = false,
     DragInput = nil,
-    DragStart = nil,
     StartPos = nil,
-    SearchResults = {},
     CommandHistory = {},
-    Settings = {
-        Theme = "Dark",
-        FontSize = 14,
-        AnimationSpeed = 0.3
-    }
+    Settings = { Theme = "Dark", FontSize = 14 }
 }
 
--- === FONCTIONS UTILITAIRES ===
+local function Notify(title, text, duration)
+    duration = duration or 3
+    local gui = Instance.new("ScreenGui")
+    local frame = Instance.new("Frame")
+    local labelTitle = Instance.new("TextLabel")
+    local labelText = Instance.new("TextLabel")
+    gui.Name = "Notification"
+    gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+    frame.Size = UDim2.new(0, 350, 0, 90)
+    frame.Position = UDim2.new(0.5, -175, 0.1, 10)
+    frame.BackgroundColor3 = Color3.fromRGB(20,20,30)
+    frame.BorderSizePixel = 1
+    frame.BorderColor3 = Color3.fromRGB(60,60,100)
+    frame.BackgroundTransparency = 0.05
+    frame.Parent = gui
+    labelTitle.Size = UDim2.new(1,-10,0,25)
+    labelTitle.Position = UDim2.new(0,5,0,5)
+    labelTitle.BackgroundTransparency = 1
+    labelTitle.Text = title
+    labelTitle.TextColor3 = Color3.fromRGB(255,255,255)
+    labelTitle.TextXAlignment = Enum.TextXAlignment.Left
+    labelTitle.Font = Enum.Font.SourceSansBold
+    labelTitle.TextSize = 16
+    labelTitle.Parent = frame
+    labelText.Size = UDim2.new(1,-10,0,45)
+    labelText.Position = UDim2.new(0,5,0,35)
+    labelText.BackgroundTransparency = 1
+    labelText.Text = text
+    labelText.TextColor3 = Color3.fromRGB(200,200,220)
+    labelText.TextXAlignment = Enum.TextXAlignment.Left
+    labelText.TextYAlignment = Enum.TextYAlignment.Top
+    labelText.Font = Enum.Font.SourceSans
+    labelText.TextSize = 14
+    labelText.TextWrapped = true
+    labelText.Parent = frame
+    game:GetService("Debris"):AddItem(gui, duration)
+end
+
 local function GetPlayerByName(name)
     if not name or name == "" then return nil end
     for _, plr in ipairs(Players:GetPlayers()) do
@@ -43,65 +70,8 @@ local function GetPlayerByName(name)
     return nil
 end
 
-local function GetPlayersByPartial(name)
-    local results = {}
-    if not name or name == "" then return results end
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr.Name:lower():find(name:lower()) or plr.DisplayName:lower():find(name:lower()) then
-            table.insert(results, plr)
-        end
-    end
-    return results
-end
-
-local function Notify(title, text, duration)
-    duration = duration or 3
-    local notification = Instance.new("ScreenGui")
-    local frame = Instance.new("Frame")
-    local labelTitle = Instance.new("TextLabel")
-    local labelText = Instance.new("TextLabel")
-    
-    notification.Name = "Notification"
-    notification.Parent = LocalPlayer:WaitForChild("PlayerGui")
-    
-    frame.Size = UDim2.new(0, 350, 0, 90)
-    frame.Position = UDim2.new(0.5, -175, 0.1, 10)
-    frame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
-    frame.BorderSizePixel = 1
-    frame.BorderColor3 = Color3.fromRGB(60, 60, 100)
-    frame.BackgroundTransparency = 0.05
-    frame.Parent = notification
-    
-    labelTitle.Size = UDim2.new(1, -10, 0, 25)
-    labelTitle.Position = UDim2.new(0, 5, 0, 5)
-    labelTitle.BackgroundTransparency = 1
-    labelTitle.Text = title
-    labelTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-    labelTitle.TextXAlignment = Enum.TextXAlignment.Left
-    labelTitle.Font = Enum.Font.SourceSansBold
-    labelTitle.TextSize = 16
-    labelTitle.Parent = frame
-    
-    labelText.Size = UDim2.new(1, -10, 0, 45)
-    labelText.Position = UDim2.new(0, 5, 0, 35)
-    labelText.BackgroundTransparency = 1
-    labelText.Text = text
-    labelText.TextColor3 = Color3.fromRGB(200, 200, 220)
-    labelText.TextXAlignment = Enum.TextXAlignment.Left
-    labelText.TextYAlignment = Enum.TextYAlignment.Top
-    labelText.Font = Enum.Font.SourceSans
-    labelText.TextSize = 14
-    labelText.TextWrapped = true
-    labelText.Parent = frame
-    
-    game:GetService("Debris"):AddItem(notification, duration)
-end
-
--- === COMMANDES (structure étendue) ===
-local Commands = {
-    -- Chaque commande : {func, description, aliases, usage}
-}
-
+-- Structure des commandes
+local Commands = {}
 function Commands:register(name, data)
     Commands[name:lower()] = data
     if data.aliases then
@@ -111,75 +81,71 @@ function Commands:register(name, data)
     end
 end
 
--- Enregistrement des commandes
+-- Enregistrement des commandes (partie 1)
 Commands:register("kill", {
-    func = function(playerName)
-        local target = GetPlayerByName(playerName)
-        if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-            target.Character.Humanoid.Health = 0
-            Notify("AntonioHub", "Joueur " .. target.Name .. " tué.", 2)
-        else
-            Notify("AntonioHub", "Joueur introuvable ou invalide.", 2)
-        end
-    end,
-    description = "Tue le joueur spécifié",
-    aliases = {"k"},
-    usage = "kill [nom]"
-})
-
-Commands:register("kick", {
-    func = function(playerName)
-        local target = GetPlayerByName(playerName)
-        if target then
-            target:Kick("Expulsé par AntonioHub.")
-            Notify("AntonioHub", "Joueur " .. target.Name .. " expulsé.", 2)
+    func = function(p)
+        local t = GetPlayerByName(p)
+        if t and t.Character and t.Character:FindFirstChild("Humanoid") then
+            t.Character.Humanoid.Health = 0
+            Notify("AntonioHub", "Joueur "..t.Name.." tué.", 2)
         else
             Notify("AntonioHub", "Joueur introuvable.", 2)
         end
     end,
-    description = "Expulse le joueur spécifié",
+    description = "Tue le joueur",
+    aliases = {"k"},
+    usage = "kill [nom]"
+})
+Commands:register("kick", {
+    func = function(p)
+        local t = GetPlayerByName(p)
+        if t then
+            t:Kick("Expulsé par AntonioHub.")
+            Notify("AntonioHub", "Joueur "..t.Name.." expulsé.", 2)
+        else
+            Notify("AntonioHub", "Joueur introuvable.", 2)
+        end
+    end,
+    description = "Expulse le joueur",
     aliases = {"kck"},
     usage = "kick [nom]"
 })
-
 Commands:register("bring", {
-    func = function(playerName)
-        local target = GetPlayerByName(playerName)
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local root = target.Character.HumanoidRootPart
-            local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if localRoot then
-                root.CFrame = localRoot.CFrame + Vector3.new(0, 2, 0)
-                Notify("AntonioHub", "Joueur " .. target.Name .. " téléporté vers vous.", 2)
+    func = function(p)
+        local t = GetPlayerByName(p)
+        if t and t.Character and t.Character:FindFirstChild("HumanoidRootPart") then
+            local r = t.Character.HumanoidRootPart
+            local lr = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if lr then
+                r.CFrame = lr.CFrame + Vector3.new(0,2,0)
+                Notify("AntonioHub", "Joueur "..t.Name.." téléporté vers vous.", 2)
             end
         else
-            Notify("AntonioHub", "Joueur introuvable ou sans personnage.", 2)
+            Notify("AntonioHub", "Joueur introuvable.", 2)
         end
     end,
     description = "Téléporte le joueur vers vous",
     aliases = {"b"},
     usage = "bring [nom]"
 })
-
 Commands:register("goto", {
-    func = function(playerName)
-        local target = GetPlayerByName(playerName)
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local root = target.Character.HumanoidRootPart
-            local localRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-            if localRoot then
-                localRoot.CFrame = root.CFrame + Vector3.new(0, 2, 0)
-                Notify("AntonioHub", "Vous êtes téléporté vers " .. target.Name .. ".", 2)
+    func = function(p)
+        local t = GetPlayerByName(p)
+        if t and t.Character and t.Character:FindFirstChild("HumanoidRootPart") then
+            local r = t.Character.HumanoidRootPart
+            local lr = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if lr then
+                lr.CFrame = r.CFrame + Vector3.new(0,2,0)
+                Notify("AntonioHub", "Téléporté vers "..t.Name, 2)
             end
         else
-            Notify("AntonioHub", "Joueur introuvable ou sans personnage.", 2)
+            Notify("AntonioHub", "Joueur introuvable.", 2)
         end
     end,
     description = "Vous téléporte vers le joueur",
-    aliases = {"tp", "teleport"},
+    aliases = {"tp","teleport"},
     usage = "goto [nom]"
 })
-
 Commands:register("fly", {
     func = function(speed)
         speed = tonumber(speed) or 50
@@ -187,167 +153,157 @@ Commands:register("fly", {
         if not char then return end
         local humanoid = char:FindFirstChild("Humanoid")
         if not humanoid then return end
-        
         local flying = false
         local bodyVelocity = Instance.new("BodyVelocity")
-        bodyVelocity.MaxForce = Vector3.new(4000, 4000, 4000)
-        bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        bodyVelocity.MaxForce = Vector3.new(4000,4000,4000)
+        bodyVelocity.Velocity = Vector3.new(0,0,0)
         local root = char:FindFirstChild("HumanoidRootPart")
         if root then bodyVelocity.Parent = root end
-        
         local connection
         connection = RunService.Heartbeat:Connect(function()
             if not flying or not root then return end
-            local moveDirection = Vector3.new(0, 0, 0)
-            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Vector3.new(0, 0, -speed) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection + Vector3.new(0, 0, speed) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection + Vector3.new(-speed, 0, 0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Vector3.new(speed, 0, 0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, speed, 0) end
-            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection + Vector3.new(0, -speed, 0) end
-            
+            local moveDirection = Vector3.new(0,0,0)
+            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + Vector3.new(0,0,-speed) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection + Vector3.new(0,0,speed) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection + Vector3.new(-speed,0,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + Vector3.new(speed,0,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0,speed,0) end
+            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection + Vector3.new(0,-speed,0) end
             local cam = workspace.CurrentCamera
             local forward = cam.CFrame.LookVector
             local right = cam.CFrame.RightVector
             local up = cam.CFrame.UpVector
-            
             local dir = (forward * -moveDirection.Z + right * moveDirection.X + up * moveDirection.Y)
             bodyVelocity.Velocity = dir * speed
         end)
-        
         flying = true
-        Notify("AntonioHub", "Vol activé (vitesse " .. speed .. "). Appuyez sur X pour désactiver.", 3)
-        
-        local xConnection
-        xConnection = UserInputService.InputBegan:Connect(function(input, processed)
-            if processed then return end
-            if input.KeyCode == Enum.KeyCode.X then
-                flying = false
-                connection:Disconnect()
-                xConnection:Disconnect()
-                bodyVelocity:Destroy()
-                Notify("AntonioHub", "Vol désactivé.", 2)
-            end
+        Notify("AntonioHub", "Vol activé (vitesse "..speed..").", 3)
+        local stopBtn = Instance.new("TextButton")
+        stopBtn.Size = UDim2.new(0, 100, 0, 40)
+        stopBtn.Position = UDim2.new(0.5, -50, 0.8, 0)
+        stopBtn.BackgroundColor3 = Color3.fromRGB(200,50,50)
+        stopBtn.BorderSizePixel = 0
+        stopBtn.Text = "Arrêter vol"
+        stopBtn.TextColor3 = Color3.fromRGB(255,255,255)
+        stopBtn.Font = Enum.Font.SourceSansBold
+        stopBtn.TextSize = 16
+        stopBtn.Parent = LocalPlayer.PlayerGui:FindFirstChild("AntonioHub") or LocalPlayer.PlayerGui
+        stopBtn.MouseButton1Click:Connect(function()
+            flying = false
+            connection:Disconnect()
+            bodyVelocity:Destroy()
+            stopBtn:Destroy()
+            Notify("AntonioHub", "Vol désactivé.", 2)
         end)
     end,
-    description = "Active le vol avec vitesse personnalisable",
+    description = "Active le vol",
     aliases = {"f"},
     usage = "fly [vitesse]"
 })
-
 Commands:register("noclip", {
     func = function()
         local char = LocalPlayer.Character
         if not char then return end
         for _, part in ipairs(char:GetDescendants()) do
-            if part:IsA("BasePart") then
-                part.CanCollide = false
-            end
+            if part:IsA("BasePart") then part.CanCollide = false end
         end
-        Notify("AntonioHub", "Noclip activé sur votre personnage.", 2)
+        Notify("AntonioHub", "Noclip activé.", 2)
     end,
-    description = "Active le noclip (traverse les murs)",
+    description = "Traverse les murs",
     aliases = {"nc"},
     usage = "noclip"
 })
-
 Commands:register("heal", {
     func = function()
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("Humanoid") then
             char.Humanoid.Health = char.Humanoid.MaxHealth
-            Notify("AntonioHub", "Vous êtes soigné.", 2)
+            Notify("AntonioHub", "Soigné.", 2)
         end
     end,
-    description = "Restaure votre santé au maximum",
+    description = "Restaure la santé",
     aliases = {"h"},
     usage = "heal"
 })
-
 Commands:register("adminlist", {
     func = function()
-        local list = "=== Joueurs en ligne ===\n"
+        local list = "=== Joueurs ===\n"
         for _, plr in ipairs(Players:GetPlayers()) do
-            list = list .. plr.Name .. " (ID: " .. plr.UserId .. ")\n"
+            list = list..plr.Name.." (ID:"..plr.UserId..")\n"
         end
         Notify("AntonioHub", list, 5)
     end,
-    description = "Affiche la liste des joueurs en ligne",
-    aliases = {"players", "list"},
+    description = "Liste des joueurs",
+    aliases = {"players","list"},
     usage = "adminlist"
 })
-
--- Nouvelles commandes avancées
+-- Suite de l'enregistrement des commandes
 Commands:register("loopkill", {
-    func = function(playerName)
-        local target = GetPlayerByName(playerName)
-        if not target then Notify("AntonioHub", "Joueur introuvable.", 2) return end
+    func = function(p)
+        local t = GetPlayerByName(p)
+        if not t then Notify("AntonioHub", "Joueur introuvable.", 2) return end
         local connection
         connection = RunService.Heartbeat:Connect(function()
-            if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-                target.Character.Humanoid.Health = 0
+            if t and t.Character and t.Character:FindFirstChild("Humanoid") then
+                t.Character.Humanoid.Health = 0
             else
                 connection:Disconnect()
-                Notify("AntonioHub", "Loopkill arrêté sur " .. target.Name, 2)
+                Notify("AntonioHub", "Loopkill arrêté sur "..t.Name, 2)
             end
         end)
-        Notify("AntonioHub", "Loopkill activé sur " .. target.Name, 2)
+        Notify("AntonioHub", "Loopkill activé sur "..t.Name, 2)
     end,
-    description = "Tue en boucle le joueur spécifié",
+    description = "Tue en boucle",
     aliases = {"lk"},
     usage = "loopkill [nom]"
 })
-
 Commands:register("freeze", {
-    func = function(playerName)
-        local target = GetPlayerByName(playerName)
-        if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-            target.Character.Humanoid.PlatformStand = true
-            Notify("AntonioHub", "Joueur " .. target.Name .. " figé.", 2)
+    func = function(p)
+        local t = GetPlayerByName(p)
+        if t and t.Character and t.Character:FindFirstChild("Humanoid") then
+            t.Character.Humanoid.PlatformStand = true
+            Notify("AntonioHub", "Joueur "..t.Name.." figé.", 2)
         else
             Notify("AntonioHub", "Joueur introuvable.", 2)
         end
     end,
-    description = "Fige le joueur (immobilise)",
+    description = "Fige le joueur",
     aliases = {"frz"},
     usage = "freeze [nom]"
 })
-
 Commands:register("unfreeze", {
-    func = function(playerName)
-        local target = GetPlayerByName(playerName)
-        if target and target.Character and target.Character:FindFirstChild("Humanoid") then
-            target.Character.Humanoid.PlatformStand = false
-            Notify("AntonioHub", "Joueur " .. target.Name .. " défigé.", 2)
+    func = function(p)
+        local t = GetPlayerByName(p)
+        if t and t.Character and t.Character:FindFirstChild("Humanoid") then
+            t.Character.Humanoid.PlatformStand = false
+            Notify("AntonioHub", "Joueur "..t.Name.." défigé.", 2)
         else
             Notify("AntonioHub", "Joueur introuvable.", 2)
         end
     end,
-    description = "Défige le joueur",
+    description = "Défige",
     aliases = {"ufrz"},
     usage = "unfreeze [nom]"
 })
-
 Commands:register("explode", {
-    func = function(playerName)
-        local target = GetPlayerByName(playerName)
-        if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-            local root = target.Character.HumanoidRootPart
-            local explosion = Instance.new("Explosion")
-            explosion.Position = root.Position
-            explosion.BlastRadius = 20
-            explosion.BlastPressure = 100000
-            explosion.Parent = workspace
-            Notify("AntonioHub", "Explosion sur " .. target.Name, 2)
+    func = function(p)
+        local t = GetPlayerByName(p)
+        if t and t.Character and t.Character:FindFirstChild("HumanoidRootPart") then
+            local r = t.Character.HumanoidRootPart
+            local exp = Instance.new("Explosion")
+            exp.Position = r.Position
+            exp.BlastRadius = 20
+            exp.BlastPressure = 100000
+            exp.Parent = workspace
+            Notify("AntonioHub", "Explosion sur "..t.Name, 2)
         else
             Notify("AntonioHub", "Joueur introuvable.", 2)
         end
     end,
-    description = "Crée une explosion sur le joueur",
+    description = "Explosion sur le joueur",
     aliases = {"exp"},
     usage = "explode [nom]"
 })
-
 Commands:register("clearchat", {
     func = function()
         local chat = game:GetService("Chat")
@@ -363,266 +319,238 @@ Commands:register("clearchat", {
     aliases = {"cc"},
     usage = "clearchat"
 })
-
 Commands:register("speed", {
     func = function(speed)
         speed = tonumber(speed) or 16
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("Humanoid") then
             char.Humanoid.WalkSpeed = speed
-            Notify("AntonioHub", "Vitesse réglée à " .. speed, 2)
+            Notify("AntonioHub", "Vitesse réglée à "..speed, 2)
         end
     end,
-    description = "Modifie votre vitesse de déplacement",
+    description = "Modifie la vitesse",
     aliases = {"spd"},
     usage = "speed [valeur]"
 })
-
 Commands:register("jump", {
     func = function(power)
         power = tonumber(power) or 50
         local char = LocalPlayer.Character
         if char and char:FindFirstChild("Humanoid") then
             char.Humanoid.JumpPower = power
-            Notify("AntonioHub", "Puissance de saut réglée à " .. power, 2)
+            Notify("AntonioHub", "Saut réglé à "..power, 2)
         end
     end,
-    description = "Modifie votre puissance de saut",
+    description = "Modifie le saut",
     aliases = {"jp"},
     usage = "jump [valeur]"
 })
 -- === CONSTRUCTION DE L'INTERFACE ===
 local function CreateGUI()
-    -- ScreenGui
     local gui = Instance.new("ScreenGui")
     gui.Name = "AntonioHub"
     gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     AntonioHub.GUI = gui
-    
-    -- Main Frame
+
     local main = Instance.new("Frame")
     main.Size = UDim2.new(0, 600, 0, 500)
     main.Position = UDim2.new(0.5, -300, 0.5, -250)
-    main.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+    main.BackgroundColor3 = Color3.fromRGB(18,18,28)
     main.BorderSizePixel = 1
-    main.BorderColor3 = Color3.fromRGB(50, 50, 90)
+    main.BorderColor3 = Color3.fromRGB(50,50,90)
     main.BackgroundTransparency = 0.05
     main.Parent = gui
     AntonioHub.MainFrame = main
-    
-    -- Shadow / bordure interne
-    local shadow = Instance.new("Frame")
-    shadow.Size = UDim2.new(1, 0, 1, 0)
-    shadow.Position = UDim2.new(0, 0, 0, 0)
-    shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    shadow.BackgroundTransparency = 0.5
-    shadow.BorderSizePixel = 0
-    shadow.ZIndex = 0
-    shadow.Parent = main
-    
-    -- Titre / Barre de déplacement
+
     local titleBar = Instance.new("Frame")
-    titleBar.Size = UDim2.new(1, 0, 0, 35)
-    titleBar.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
+    titleBar.Size = UDim2.new(1,0,0,35)
+    titleBar.BackgroundColor3 = Color3.fromRGB(28,28,42)
     titleBar.BorderSizePixel = 0
     titleBar.Parent = main
-    
+
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(0.7, 0, 1, 0)
-    titleLabel.Position = UDim2.new(0, 12, 0, 0)
+    titleLabel.Size = UDim2.new(0.7,0,1,0)
+    titleLabel.Position = UDim2.new(0,12,0,0)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = "AntonioHub v2.0"
-    titleLabel.TextColor3 = Color3.fromRGB(220, 220, 255)
+    titleLabel.TextColor3 = Color3.fromRGB(220,220,255)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     titleLabel.Font = Enum.Font.SourceSansBold
     titleLabel.TextSize = 18
     titleLabel.Parent = titleBar
-    
-    -- Bouton minimiser
+
     local minBtn = Instance.new("TextButton")
-    minBtn.Size = UDim2.new(0, 35, 1, 0)
-    minBtn.Position = UDim2.new(1, -75, 0, 0)
-    minBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 55)
+    minBtn.Size = UDim2.new(0,35,1,0)
+    minBtn.Position = UDim2.new(1,-75,0,0)
+    minBtn.BackgroundColor3 = Color3.fromRGB(40,40,55)
     minBtn.BorderSizePixel = 0
     minBtn.Text = "—"
-    minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    minBtn.TextColor3 = Color3.fromRGB(255,255,255)
     minBtn.Font = Enum.Font.SourceSansBold
     minBtn.TextSize = 20
     minBtn.Parent = titleBar
-    
-    -- Bouton fermer
+
     local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.new(0, 35, 1, 0)
-    closeBtn.Position = UDim2.new(1, -35, 0, 0)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(70, 30, 30)
+    closeBtn.Size = UDim2.new(0,35,1,0)
+    closeBtn.Position = UDim2.new(1,-35,0,0)
+    closeBtn.BackgroundColor3 = Color3.fromRGB(70,30,30)
     closeBtn.BorderSizePixel = 0
     closeBtn.Text = "✕"
-    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    closeBtn.TextColor3 = Color3.fromRGB(255,255,255)
     closeBtn.Font = Enum.Font.SourceSansBold
     closeBtn.TextSize = 18
     closeBtn.Parent = titleBar
-    
-    -- === BARRE DE RECHERCHE (nouvelle) ===
+
     local searchBar = Instance.new("Frame")
-    searchBar.Size = UDim2.new(1, -20, 0, 40)
-    searchBar.Position = UDim2.new(0, 10, 0, 40)
-    searchBar.BackgroundColor3 = Color3.fromRGB(30, 30, 48)
+    searchBar.Size = UDim2.new(1,-20,0,40)
+    searchBar.Position = UDim2.new(0,10,0,40)
+    searchBar.BackgroundColor3 = Color3.fromRGB(30,30,48)
     searchBar.BorderSizePixel = 1
-    searchBar.BorderColor3 = Color3.fromRGB(60, 60, 100)
+    searchBar.BorderColor3 = Color3.fromRGB(60,60,100)
     searchBar.Parent = main
-    
+
     local searchIcon = Instance.new("TextLabel")
-    searchIcon.Size = UDim2.new(0, 30, 1, 0)
-    searchIcon.Position = UDim2.new(0, 5, 0, 0)
+    searchIcon.Size = UDim2.new(0,30,1,0)
+    searchIcon.Position = UDim2.new(0,5,0,0)
     searchIcon.BackgroundTransparency = 1
     searchIcon.Text = "🔍"
-    searchIcon.TextColor3 = Color3.fromRGB(150, 150, 200)
+    searchIcon.TextColor3 = Color3.fromRGB(150,150,200)
     searchIcon.Font = Enum.Font.SourceSans
     searchIcon.TextSize = 18
     searchIcon.Parent = searchBar
-    
+
     local searchBox = Instance.new("TextBox")
-    searchBox.Size = UDim2.new(1, -40, 1, 0)
-    searchBox.Position = UDim2.new(0, 35, 0, 0)
+    searchBox.Size = UDim2.new(1,-40,1,0)
+    searchBox.Position = UDim2.new(0,35,0,0)
     searchBox.BackgroundTransparency = 1
     searchBox.Text = ""
-    searchBox.PlaceholderText = "Rechercher une commande ou un joueur..."
-    searchBox.TextColor3 = Color3.fromRGB(220, 220, 255)
-    searchBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 170)
+    searchBox.PlaceholderText = "Rechercher..."
+    searchBox.TextColor3 = Color3.fromRGB(220,220,255)
+    searchBox.PlaceholderColor3 = Color3.fromRGB(120,120,170)
     searchBox.Font = Enum.Font.SourceSans
     searchBox.TextSize = 14
     searchBox.TextXAlignment = Enum.TextXAlignment.Left
     searchBox.Parent = searchBar
-    
-    -- Conteneur principal (ScrollingFrame pour le contenu)
+
     local contentContainer = Instance.new("ScrollingFrame")
-    contentContainer.Size = UDim2.new(1, 0, 1, -85)
-    contentContainer.Position = UDim2.new(0, 0, 0, 85)
-    contentContainer.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+    contentContainer.Size = UDim2.new(1,0,1,-85)
+    contentContainer.Position = UDim2.new(0,0,0,85)
+    contentContainer.BackgroundColor3 = Color3.fromRGB(18,18,28)
     contentContainer.BorderSizePixel = 0
     contentContainer.BackgroundTransparency = 0.05
     contentContainer.ScrollBarThickness = 8
-    contentContainer.ScrollBarImageColor3 = Color3.fromRGB(70, 70, 120)
-    contentContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+    contentContainer.ScrollBarImageColor3 = Color3.fromRGB(70,70,120)
+    contentContainer.CanvasSize = UDim2.new(0,0,0,0)
     contentContainer.Parent = main
-    
-    -- Barre d'onglets (horizontal)
+
     local tabBar = Instance.new("Frame")
-    tabBar.Size = UDim2.new(1, 0, 0, 38)
-    tabBar.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+    tabBar.Size = UDim2.new(1,0,0,38)
+    tabBar.BackgroundColor3 = Color3.fromRGB(25,25,40)
     tabBar.BorderSizePixel = 0
     tabBar.Parent = contentContainer
-    
-    -- Liste des onglets (noms)
-    local tabNames = {"Commandes", "Joueurs", "Utilitaires", "Vaztoodix", "Paramètres"}
+
+    local tabNames = {"Commandes","Joueurs","Utilitaires","Vaztoodix","Paramètres"}
     local tabButtons = {}
     local tabContents = {}
-    
-    -- Fonction pour créer un onglet
+
     local function CreateTab(name, index)
         local btn = Instance.new("TextButton")
         local btnWidth = 110
         btn.Size = UDim2.new(0, btnWidth, 1, -6)
         btn.Position = UDim2.new(0, 5 + (index-1)*(btnWidth+5), 0, 3)
-        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+        btn.BackgroundColor3 = Color3.fromRGB(40,40,60)
         btn.BorderSizePixel = 0
         btn.Text = name
-        btn.TextColor3 = Color3.fromRGB(180, 180, 220)
+        btn.TextColor3 = Color3.fromRGB(180,180,220)
         btn.Font = Enum.Font.SourceSans
         btn.TextSize = 14
         btn.Parent = tabBar
-        
-        -- Contenu de l'onglet (ScrollingFrame interne)
+
         local content = Instance.new("ScrollingFrame")
-        content.Size = UDim2.new(1, 0, 1, -38)
-        content.Position = UDim2.new(0, 0, 0, 38)
-        content.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
+        content.Size = UDim2.new(1,0,1,-38)
+        content.Position = UDim2.new(0,0,0,38)
+        content.BackgroundColor3 = Color3.fromRGB(18,18,28)
         content.BorderSizePixel = 0
         content.BackgroundTransparency = 0.05
         content.ScrollBarThickness = 6
-        content.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 100)
-        content.CanvasSize = UDim2.new(0, 0, 0, 0)
+        content.ScrollBarImageColor3 = Color3.fromRGB(60,60,100)
+        content.CanvasSize = UDim2.new(0,0,0,0)
         content.Visible = false
         content.Parent = contentContainer
-        
+
         tabButtons[name] = btn
         tabContents[name] = content
-        
+
         btn.MouseButton1Click:Connect(function()
             for _, tb in pairs(tabButtons) do
-                tb.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
-                tb.TextColor3 = Color3.fromRGB(180, 180, 220)
+                tb.BackgroundColor3 = Color3.fromRGB(40,40,60)
+                tb.TextColor3 = Color3.fromRGB(180,180,220)
             end
             for _, tc in pairs(tabContents) do
                 tc.Visible = false
             end
-            btn.BackgroundColor3 = Color3.fromRGB(70, 70, 120)
-            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.BackgroundColor3 = Color3.fromRGB(70,70,120)
+            btn.TextColor3 = Color3.fromRGB(255,255,255)
             content.Visible = true
             AntonioHub.CurrentTab = name
-            -- Cacher les résultats de recherche quand on change d'onglet
             searchBox.Text = ""
         end)
-        
         return content
     end
-    
-    -- Création des onglets
+
     local tabCmd = CreateTab("Commandes", 1)
     local tabPlayers = CreateTab("Joueurs", 2)
     local tabUtils = CreateTab("Utilitaires", 3)
     local tabVaz = CreateTab("Vaztoodix", 4)
     local tabSettings = CreateTab("Paramètres", 5)
-    
-    -- Activer le premier onglet par défaut
-    tabButtons["Commandes"]:BackgroundColor3 = Color3.fromRGB(70, 70, 120)
-    tabButtons["Commandes"]:TextColor3 = Color3.fromRGB(255, 255, 255)
+
+    tabButtons["Commandes"]:BackgroundColor3 = Color3.fromRGB(70,70,120)
+    tabButtons["Commandes"]:TextColor3 = Color3.fromRGB(255,255,255)
     tabContents["Commandes"].Visible = true
     AntonioHub.CurrentTab = "Commandes"
-    
-    -- === FONCTIONS D'AJOUT D'ÉLÉMENTS D'INTERFACE ===
+
     local function AddButton(parent, text, callback, yPos, width)
         width = width or 220
         local btn = Instance.new("TextButton")
         btn.Size = UDim2.new(0, width, 0, 36)
         btn.Position = UDim2.new(0.5, -width/2, 0, yPos or 0)
-        btn.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
+        btn.BackgroundColor3 = Color3.fromRGB(45,45,70)
         btn.BorderSizePixel = 0
         btn.Text = text
-        btn.TextColor3 = Color3.fromRGB(210, 210, 240)
+        btn.TextColor3 = Color3.fromRGB(210,210,240)
         btn.Font = Enum.Font.SourceSans
         btn.TextSize = 14
         btn.Parent = parent
         btn.MouseButton1Click:Connect(callback)
         return btn
     end
-    
+
     local function AddLabel(parent, text, yPos, size, color)
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(0, 450, 0, size or 25)
         lbl.Position = UDim2.new(0.5, -225, 0, yPos or 0)
         lbl.BackgroundTransparency = 1
         lbl.Text = text
-        lbl.TextColor3 = color or Color3.fromRGB(200, 200, 230)
+        lbl.TextColor3 = color or Color3.fromRGB(200,200,230)
         lbl.Font = Enum.Font.SourceSans
         lbl.TextSize = 14
         lbl.TextXAlignment = Enum.TextXAlignment.Left
         lbl.Parent = parent
         return lbl
     end
-    
+
     local function AddTextBox(parent, placeholder, callback, yPos, width)
         width = width or 250
         local box = Instance.new("TextBox")
         box.Size = UDim2.new(0, width, 0, 32)
         box.Position = UDim2.new(0.5, -width/2, 0, yPos or 0)
-        box.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+        box.BackgroundColor3 = Color3.fromRGB(35,35,55)
         box.BorderSizePixel = 1
-        box.BorderColor3 = Color3.fromRGB(55, 55, 90)
+        box.BorderColor3 = Color3.fromRGB(55,55,90)
         box.Text = ""
         box.PlaceholderText = placeholder
-        box.TextColor3 = Color3.fromRGB(220, 220, 240)
-        box.PlaceholderColor3 = Color3.fromRGB(110, 110, 160)
+        box.TextColor3 = Color3.fromRGB(220,220,240)
+        box.PlaceholderColor3 = Color3.fromRGB(110,110,160)
         box.Font = Enum.Font.SourceSans
         box.TextSize = 14
         box.Parent = parent
@@ -634,470 +562,287 @@ local function CreateGUI()
         end)
         return box
     end
--- === FONCTION DE RECHERCHE DYNAMIQUE ===
-local function PerformSearch(query)
-    if not query or query == "" then
-        -- Afficher tout le contenu normal
+
+    local function PerformSearch(query)
         for _, child in ipairs(tabCmd:GetChildren()) do
             if child:IsA("TextButton") or child:IsA("TextLabel") or child:IsA("TextBox") then
-                child.Visible = true
-            end
-        end
-        return
-    end
-    
-    local lowerQuery = query:lower()
-    -- Masquer tous les éléments, puis afficher ceux qui correspondent
-    for _, child in ipairs(tabCmd:GetChildren()) do
-        if child:IsA("TextButton") or child:IsA("TextLabel") or child:IsA("TextBox") then
-            local text = child.Text or ""
-            if text:lower():find(lowerQuery) then
-                child.Visible = true
-            else
-                child.Visible = false
+                if query and query ~= "" then
+                    local text = child.Text or ""
+                    child.Visible = text:lower():find(query:lower()) ~= nil
+                else
+                    child.Visible = true
+                end
             end
         end
     end
-end
-
-searchBox.Changed:Connect(function(prop)
-    if prop == "Text" then
-        PerformSearch(searchBox.Text)
-    end
-end)
-
--- === REMPLISSAGE DES ONGLETS ===
-
--- Onglet Commandes
+    searchBox.Changed:Connect(function(prop)
+        if prop == "Text" then PerformSearch(searchBox.Text) end
+    end)
+-- Remplissage onglet Commandes
 local cmdY = 10
 AddLabel(tabCmd, "Commandes générales :", cmdY); cmdY = cmdY + 30
-AddButton(tabCmd, "Kill [nom]", function()
-    local name = LocalPlayer.Name
-    Commands.kill.func(name)
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Kick [nom]", function()
-    local name = LocalPlayer.Name
-    Commands.kick.func(name)
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Bring [nom]", function()
-    local name = LocalPlayer.Name
-    Commands.bring.func(name)
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Goto [nom]", function()
-    local name = LocalPlayer.Name
-    Commands.goto.func(name)
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Fly [vitesse]", function()
-    Commands.fly.func("50")
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Noclip", function()
-    Commands.noclip.func()
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Heal", function()
-    Commands.heal.func()
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Admin List", function()
-    Commands.adminlist.func()
-end, cmdY); cmdY = cmdY + 42
-
--- Nouvelles commandes dans l'interface
+AddButton(tabCmd, "Kill [nom]", function() local name = LocalPlayer.Name; Commands.kill.func(name) end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Kick [nom]", function() local name = LocalPlayer.Name; Commands.kick.func(name) end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Bring [nom]", function() local name = LocalPlayer.Name; Commands.bring.func(name) end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Goto [nom]", function() local name = LocalPlayer.Name; Commands.goto.func(name) end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Fly [vitesse]", function() Commands.fly.func("50") end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Noclip", function() Commands.noclip.func() end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Heal", function() Commands.heal.func() end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Admin List", function() Commands.adminlist.func() end, cmdY); cmdY = cmdY + 42
 AddLabel(tabCmd, "Commandes avancées :", cmdY); cmdY = cmdY + 30
-AddButton(tabCmd, "Loopkill [nom]", function()
-    local name = LocalPlayer.Name
-    Commands.loopkill.func(name)
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Freeze [nom]", function()
-    local name = LocalPlayer.Name
-    Commands.freeze.func(name)
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Unfreeze [nom]", function()
-    local name = LocalPlayer.Name
-    Commands.unfreeze.func(name)
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Explode [nom]", function()
-    local name = LocalPlayer.Name
-    Commands.explode.func(name)
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Clear Chat", function()
-    Commands.clearchat.func()
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Speed [valeur]", function()
-    Commands.speed.func("25")
-end, cmdY); cmdY = cmdY + 42
-AddButton(tabCmd, "Jump [valeur]", function()
-    Commands.jump.func("80")
-end, cmdY); cmdY = cmdY + 42
-
--- Zone de saisie pour commandes personnalisées avec historique
+AddButton(tabCmd, "Loopkill [nom]", function() local name = LocalPlayer.Name; Commands.loopkill.func(name) end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Freeze [nom]", function() local name = LocalPlayer.Name; Commands.freeze.func(name) end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Unfreeze [nom]", function() local name = LocalPlayer.Name; Commands.unfreeze.func(name) end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Explode [nom]", function() local name = LocalPlayer.Name; Commands.explode.func(name) end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Clear Chat", function() Commands.clearchat.func() end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Speed [valeur]", function() Commands.speed.func("25") end, cmdY); cmdY = cmdY + 42
+AddButton(tabCmd, "Jump [valeur]", function() Commands.jump.func("80") end, cmdY); cmdY = cmdY + 42
 AddLabel(tabCmd, "Commande personnalisée :", cmdY); cmdY = cmdY + 30
 local cmdBox = AddTextBox(tabCmd, "ex: kill Player", function(text)
     local parts = {}
-    for word in text:gmatch("%S+") do
-        table.insert(parts, word)
-    end
+    for word in text:gmatch("%S+") do table.insert(parts, word) end
     if #parts >= 1 then
         local cmd = parts[1]:lower()
         local args = {}
         for i = 2, #parts do table.insert(args, parts[i]) end
         local argStr = table.concat(args, " ")
-        
-        -- Ajouter à l'historique
         table.insert(AntonioHub.CommandHistory, 1, text)
         if #AntonioHub.CommandHistory > 50 then table.remove(AntonioHub.CommandHistory) end
-        
         if Commands[cmd] and Commands[cmd].func then
             Commands[cmd].func(argStr)
         else
-            Notify("AntonioHub", "Commande inconnue : " .. cmd, 2)
+            Notify("AntonioHub", "Commande inconnue : "..cmd, 2)
         end
     end
 end, cmdY); cmdY = cmdY + 40
-
--- Afficher l'historique (dernières commandes)
-AddLabel(tabCmd, "Historique des commandes :", cmdY); cmdY = cmdY + 25
-local historyLabel = AddLabel(tabCmd, "Aucune commande récente", cmdY, 20, Color3.fromRGB(150, 150, 180))
+AddLabel(tabCmd, "Historique :", cmdY); cmdY = cmdY + 25
+local historyLabel = AddLabel(tabCmd, "Aucune commande", cmdY, 20, Color3.fromRGB(150,150,180))
 cmdY = cmdY + 30
-
--- Mettre à jour l'historique visuellement
 local function UpdateHistory()
     local text = ""
     for i = 1, math.min(5, #AntonioHub.CommandHistory) do
-        text = text .. (i) .. ". " .. AntonioHub.CommandHistory[i] .. "\n"
+        text = text .. i .. ". " .. AntonioHub.CommandHistory[i] .. "\n"
     end
-    if text == "" then text = "Aucune commande récente" end
-    historyLabel.Text = text
+    historyLabel.Text = (text == "") and "Aucune commande" or text
 end
--- Override du callback pour mettre à jour l'historique
-local originalCallback = cmdBox.FocusLost
 cmdBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed and cmdBox.Text ~= "" then
-        -- Le callback est déjà géré ci-dessus, on met juste à jour l'affichage
-        UpdateHistory()
-    end
+    if enterPressed and cmdBox.Text ~= "" then UpdateHistory() end
 end)
+AddButton(tabCmd, "Effacer historique", function() AntonioHub.CommandHistory = {}; UpdateHistory(); Notify("AntonioHub", "Historique effacé.", 2) end, cmdY, 180); cmdY = cmdY + 48
+tabCmd.CanvasSize = UDim2.new(0,0,0,cmdY+30)
 
--- Ajouter un bouton pour effacer l'historique
-AddButton(tabCmd, "Effacer historique", function()
-    AntonioHub.CommandHistory = {}
-    UpdateHistory()
-    Notify("AntonioHub", "Historique effacé.", 2)
-end, cmdY, 180); cmdY = cmdY + 48
-
-tabCmd.CanvasSize = UDim2.new(0, 0, 0, cmdY + 30)
-
--- Onglet Joueurs (avec barre de recherche intégrée)
+-- Onglet Joueurs
 local plyY = 10
 AddLabel(tabPlayers, "Liste des joueurs :", plyY); plyY = plyY + 30
-
--- Sous-barre de recherche pour les joueurs
 local playerSearchBox = Instance.new("TextBox")
 playerSearchBox.Size = UDim2.new(0, 300, 0, 30)
 playerSearchBox.Position = UDim2.new(0.5, -150, 0, plyY)
-playerSearchBox.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+playerSearchBox.BackgroundColor3 = Color3.fromRGB(35,35,55)
 playerSearchBox.BorderSizePixel = 1
-playerSearchBox.BorderColor3 = Color3.fromRGB(55, 55, 90)
+playerSearchBox.BorderColor3 = Color3.fromRGB(55,55,90)
 playerSearchBox.Text = ""
 playerSearchBox.PlaceholderText = "Filtrer les joueurs..."
-playerSearchBox.TextColor3 = Color3.fromRGB(220, 220, 240)
-playerSearchBox.PlaceholderColor3 = Color3.fromRGB(110, 110, 160)
+playerSearchBox.TextColor3 = Color3.fromRGB(220,220,240)
+playerSearchBox.PlaceholderColor3 = Color3.fromRGB(110,110,160)
 playerSearchBox.Font = Enum.Font.SourceSans
 playerSearchBox.TextSize = 14
 playerSearchBox.Parent = tabPlayers
 plyY = plyY + 40
 
-local playerButtons = {}
 local function RefreshPlayerList(filter)
     filter = filter or ""
-    local lowerFilter = filter:lower()
-    -- Nettoyer les anciens boutons
     for _, child in ipairs(tabPlayers:GetChildren()) do
-        if child:IsA("TextButton") and child.Name == "PlayerBtn" then
-            child:Destroy()
-        end
+        if child:IsA("TextButton") and child.Name == "PlayerBtn" then child:Destroy() end
     end
-    playerButtons = {}
     local y = plyY
     local count = 0
     for _, plr in ipairs(Players:GetPlayers()) do
-        if filter == "" or plr.Name:lower():find(lowerFilter) or plr.DisplayName:lower():find(lowerFilter) then
+        if filter == "" or plr.Name:lower():find(filter:lower()) or plr.DisplayName:lower():find(filter:lower()) then
             local btn = Instance.new("TextButton")
             btn.Name = "PlayerBtn"
             btn.Size = UDim2.new(0, 320, 0, 32)
             btn.Position = UDim2.new(0.5, -160, 0, y)
-            btn.BackgroundColor3 = Color3.fromRGB(42, 42, 65)
+            btn.BackgroundColor3 = Color3.fromRGB(42,42,65)
             btn.BorderSizePixel = 0
-            btn.Text = plr.Name .. " (ID: " .. plr.UserId .. ")"
-            btn.TextColor3 = Color3.fromRGB(200, 200, 230)
+            btn.Text = plr.Name.." (ID:"..plr.UserId..")"
+            btn.TextColor3 = Color3.fromRGB(200,200,230)
             btn.Font = Enum.Font.SourceSans
             btn.TextSize = 13
             btn.Parent = tabPlayers
             btn.MouseButton1Click:Connect(function()
-                Notify("AntonioHub", "Joueur sélectionné : " .. plr.Name, 2)
+                Notify("AntonioHub", "Sélectionné : "..plr.Name, 2)
             end)
-            table.insert(playerButtons, btn)
             y = y + 37
             count = count + 1
         end
     end
-    -- Afficher un message si aucun résultat
     if count == 0 and filter ~= "" then
         local lbl = Instance.new("TextLabel")
         lbl.Size = UDim2.new(0, 300, 0, 25)
         lbl.Position = UDim2.new(0.5, -150, 0, y)
         lbl.BackgroundTransparency = 1
-        lbl.Text = "Aucun joueur trouvé"
-        lbl.TextColor3 = Color3.fromRGB(150, 150, 180)
+        lbl.Text = "Aucun joueur"
+        lbl.TextColor3 = Color3.fromRGB(150,150,180)
         lbl.Font = Enum.Font.SourceSans
         lbl.TextSize = 14
         lbl.Parent = tabPlayers
         y = y + 30
     end
-    tabPlayers.CanvasSize = UDim2.new(0, 0, 0, y + 30)
+    tabPlayers.CanvasSize = UDim2.new(0,0,0,y+30)
 end
-
 playerSearchBox.Changed:Connect(function(prop)
-    if prop == "Text" then
-        RefreshPlayerList(playerSearchBox.Text)
-    end
+    if prop == "Text" then RefreshPlayerList(playerSearchBox.Text) end
 end)
-
 RefreshPlayerList()
-
--- Bouton rafraîchir
 local refreshBtn = Instance.new("TextButton")
 refreshBtn.Size = UDim2.new(0, 120, 0, 32)
 refreshBtn.Position = UDim2.new(0.5, -60, 0, plyY + 40 + (#Players:GetPlayers() * 37) + 10)
-refreshBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 75)
+refreshBtn.BackgroundColor3 = Color3.fromRGB(50,50,75)
 refreshBtn.BorderSizePixel = 0
 refreshBtn.Text = "Rafraîchir"
-refreshBtn.TextColor3 = Color3.fromRGB(210, 210, 240)
+refreshBtn.TextColor3 = Color3.fromRGB(210,210,240)
 refreshBtn.Font = Enum.Font.SourceSans
 refreshBtn.TextSize = 14
 refreshBtn.Parent = tabPlayers
-refreshBtn.MouseButton1Click:Connect(function()
-    RefreshPlayerList(playerSearchBox.Text)
-end)
+refreshBtn.MouseButton1Click:Connect(function() RefreshPlayerList(playerSearchBox.Text) end)
+Players.PlayerAdded:Connect(function() RefreshPlayerList(playerSearchBox.Text) end)
+Players.PlayerRemoving:Connect(function() RefreshPlayerList(playerSearchBox.Text) end)
 
--- Mettre à jour la liste quand un joueur rejoint/quitte
-Players.PlayerAdded:Connect(function()
-    RefreshPlayerList(playerSearchBox.Text)
-end)
-Players.PlayerRemoving:Connect(function()
-    RefreshPlayerList(playerSearchBox.Text)
-end)
 -- Onglet Utilitaires
 local utilY = 10
 AddLabel(tabUtils, "Utilitaires :", utilY); utilY = utilY + 30
-AddButton(tabUtils, "Rejoindre (reset)", function()
-    game:GetService("TeleportService"):Teleport(game.PlaceId)
-end, utilY); utilY = utilY + 42
-AddButton(tabUtils, "Réinitialiser personnage", function()
-    LocalPlayer.Character = nil
-    Notify("AntonioHub", "Personnage réinitialisé.", 2)
-end, utilY); utilY = utilY + 42
-AddButton(tabUtils, "FullBright", function()
-    game.Lighting.Brightness = 2
-    game.Lighting.ClockTime = 12
-    game.Lighting.FogEnd = 100000
-    game.Lighting.Ambient = Color3.fromRGB(255, 255, 255)
-    Notify("AntonioHub", "FullBright activé.", 2)
-end, utilY); utilY = utilY + 42
-AddButton(tabUtils, "ESP (10s)", function()
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local highlight = Instance.new("Highlight")
-            highlight.Adornee = plr.Character
-            highlight.FillColor = Color3.fromRGB(255, 50, 50)
-            highlight.FillTransparency = 0.4
-            highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-            highlight.Parent = plr.Character
-            game:GetService("Debris"):AddItem(highlight, 10)
-        end
-    end
-    Notify("AntonioHub", "ESP activé pour 10 secondes.", 2)
-end, utilY); utilY = utilY + 42
-AddButton(tabUtils, "Infos serveur", function()
-    local info = "Serveur : " .. game.PlaceId .. "\nJoueurs : " .. #Players:GetPlayers() .. "\nPing : " .. math.floor(game:GetService("Stats"):GetNetworkStats().Ping:GetValue()) .. " ms"
-    Notify("AntonioHub", info, 4)
-end, utilY); utilY = utilY + 42
-AddButton(tabUtils, "Anti-AFK", function()
-    local vu = game:GetService("VirtualUser")
-    game:GetService("Players").LocalPlayer.Idled:Connect(function()
-        vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-        wait(1)
-        vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame)
-    end)
-    Notify("AntonioHub", "Anti-AFK activé.", 2)
-end, utilY); utilY = utilY + 42
-AddButton(tabUtils, "FPS Boost", function()
-    settings().Rendering.QualityLevel = 1
-    Notify("AntonioHub", "Qualité graphique réduite pour plus de FPS.", 2)
-end, utilY); utilY = utilY + 42
-AddButton(tabUtils, "Walkspeed GUI", function()
-    local speedBox = AddTextBox(tabUtils, "Nouvelle vitesse (ex: 50)", function(val)
-        local num = tonumber(val)
-        if num then
-            Commands.speed.func(tostring(num))
-        end
-    end, utilY)
-    utilY = utilY + 40
-end, utilY); utilY = utilY + 42
-
-tabUtils.CanvasSize = UDim2.new(0, 0, 0, utilY + 30)
-
--- === ONGLET VAZTOODIX (spécial) ===
-local vazY = 10
-AddLabel(tabVaz, "Chargeur de script Vaztoodix :", vazY); vazY = vazY + 30
-AddLabel(tabVaz, "Cliquez sur le bouton ci-dessous pour exécuter le script externe.", vazY); vazY = vazY + 30
-
-local vazBtn = Instance.new("TextButton")
-vazBtn.Size = UDim2.new(0, 280, 0, 55)
-vazBtn.Position = UDim2.new(0.5, -140, 0, vazY)
-vazBtn.BackgroundColor3 = Color3.fromRGB(80, 25, 90)
-vazBtn.BorderSizePixel = 1
-vazBtn.BorderColor3 = Color3.fromRGB(150, 50, 180)
-vazBtn.Text = "🚀 Lancer Vaztoodix Script"
-vazBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-vazBtn.Font = Enum.Font.SourceSansBold
-vazBtn.TextSize = 16
-vazBtn.Parent = tabVaz
-vazBtn.MouseButton1Click:Connect(function()
-    local success, err = pcall(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script"))()
-    end)
-    if success then
-        Notify("AntonioHub", "Script Vaztoodix chargé avec succès.", 3)
-    else
-        Notify("AntonioHub", "Erreur : " .. tostring(err), 4)
-    end
-end)
-
-vazY = vazY + 65
-AddLabel(tabVaz, "URL du script :", vazY); vazY = vazY + 25
-local urlLabel = Instance.new("TextLabel")
-urlLabel.Size = UDim2.new(0, 480, 0, 35)
-urlLabel.Position = UDim2.new(0.5, -240, 0, vazY)
-urlLabel.BackgroundTransparency = 1
-urlLabel.Text = "https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script"
-urlLabel.TextColor3 = Color3.fromRGB(140, 140, 200)
-urlLabel.Font = Enum.Font.SourceSans
-urlLabel.TextSize = 12
-urlLabel.TextWrapped = true
-urlLabel.Parent = tabVaz
-vazY = vazY + 45
-
--- Bouton pour copier l'URL
-local copyBtn = Instance.new("TextButton")
-copyBtn.Size = UDim2.new(0, 150, 0, 32)
-copyBtn.Position = UDim2.new(0.5, -75, 0, vazY)
-copyBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
-copyBtn.BorderSizePixel = 0
-copyBtn.Text = "📋 Copier l'URL"
-copyBtn.TextColor3 = Color3.fromRGB(210, 210, 240)
-copyBtn.Font = Enum.Font.SourceSans
-copyBtn.TextSize = 14
-copyBtn.Parent = tabVaz
-copyBtn.MouseButton1Click:Connect(function()
-    setclipboard or toclipboard or function() end("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script")
-    Notify("AntonioHub", "URL copiée dans le presse-papier.", 2)
-end)
-vazY = vazY + 45
-
--- Section "scripts populaires" inspirée de Infinite Yield, HD Admin, Nexus Admin
-AddLabel(tabVaz, "Scripts admin populaires (chargement externe) :", vazY); vazY = vazY + 30
-local popularScripts = {
-    {"Infinite Yield", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"},
-    {"Fates Admin", "https://raw.githubusercontent.com/fatesc/fates-admin/main/main.lua"},
-    {"HD Admin", "https://raw.githubusercontent.com/1ForeverHD/HDAdminV3/main/source.lua"}
-}
-
-for _, scriptData in ipairs(popularScripts) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 250, 0, 32)
-    btn.Position = UDim2.new(0.5, -125, 0, vazY)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 65)
-    btn.BorderSizePixel = 0
-    btn.Text = "Charger " .. scriptData[1]
-    btn.TextColor3 = Color3.fromRGB(200, 200, 230)
-    btn.Font = Enum.Font.SourceSans
-    btn.TextSize = 13
-    btn.Parent = tabVaz
-    btn.MouseButton1Click:Connect(function()
+AddButton(tabUtils, "Rejoindre (reset)", function() game:GetService("TeleportService"):Teleport(game.PlaceId) end, utilY); utilY = utilY + 42
+AddButton(tabUtils, "Réinitialiser personnage", function() LocalPlayer.Character = nil; Notify("AntonioHub", "Personnage réinitialisé.", 2) end, utilY); utilY = utilY + 42
+AddButton(tabUtils, "FullBright", function() game.Lighting.Brightness = 2; game.Lighting.ClockTime = 12; game.Lighting.FogEnd = 100000; game.Lighting.Ambient = Color3.fromRGB(255,255,255); Notify("AntonioHub", "FullBright activé.", 2) end, utilY); utilY = utilY + 42
+AddButton(tabUtils, "ESP (10s)", function() for _, plr in ipairs(Players:GetPlayers()) do if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then local h=Instance.new("Highlight"); h.Adornee=plr.Character; h.FillColor=Color3.fromRGB(255,50,50); h.FillTransparency=0.4; h.OutlineColor=Color3.fromRGB(255,255,255); h.Parent=plr.Character; game:GetService("Debris"):AddItem(h,10) end end; Notify("AntonioHub","ESP activé.",2) end, utilY); utilY = utilY + 42
+AddButton(tabUtils, "Infos serveur", function() local info = "Serveur : "..game.PlaceId.."\nJoueurs : "..#Players:GetPlayers().."\nPing : "..math.floor(game:GetService("Stats"):GetNetworkStats().Ping:GetValue()).." ms"; Notify("AntonioHub", info, 4) end, utilY); utilY = utilY + 42
+AddButton(tabUtils, "Anti-AFK", function() local vu=game:GetService("VirtualUser"); game:GetService("Players").LocalPlayer.Idled:Connect(function() vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame); wait(1); vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end); Notify("AntonioHub","Anti-AFK activé.",2) end, utilY); utilY = utilY + 42
+AddButton(tabUtils, "FPS Boost", function() settings().Rendering.QualityLevel = 1; Notify("AntonioHub","Qualité réduite.",2) end, utilY); utilY = utilY + 42
+tabUtils.CanvasSize = UDim2.new(0,0,0,utilY+30)
+    -- Onglet Vaztoodix
+    local vazY = 10
+    AddLabel(tabVaz, "Chargeur de script Vaztoodix :", vazY); vazY = vazY + 30
+    AddLabel(tabVaz, "Cliquez pour exécuter le script distant.", vazY); vazY = vazY + 30
+    local vazBtn = Instance.new("TextButton")
+    vazBtn.Size = UDim2.new(0, 280, 0, 55)
+    vazBtn.Position = UDim2.new(0.5, -140, 0, vazY)
+    vazBtn.BackgroundColor3 = Color3.fromRGB(80,25,90)
+    vazBtn.BorderSizePixel = 1
+    vazBtn.BorderColor3 = Color3.fromRGB(150,50,180)
+    vazBtn.Text = "🚀 Lancer Vaztoodix Script"
+    vazBtn.TextColor3 = Color3.fromRGB(255,255,255)
+    vazBtn.Font = Enum.Font.SourceSansBold
+    vazBtn.TextSize = 16
+    vazBtn.Parent = tabVaz
+    vazBtn.MouseButton1Click:Connect(function()
         local success, err = pcall(function()
-            loadstring(game:HttpGet(scriptData[2]))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script"))()
         end)
-        if success then
-            Notify("AntonioHub", scriptData[1] .. " chargé.", 3)
-        else
-            Notify("AntonioHub", "Erreur " .. scriptData[1] .. " : " .. tostring(err), 4)
-        end
+        if success then Notify("AntonioHub","Script Vaztoodix chargé.",3) else Notify("AntonioHub","Erreur : "..tostring(err),4) end
     end)
-    vazY = vazY + 38
-end
-
-tabVaz.CanvasSize = UDim2.new(0, 0, 0, vazY + 30)
-
--- === ONGLET PARAMÈTRES ===
-local setY = 10
-AddLabel(tabSettings, "Paramètres de l'interface :", setY); setY = setY + 30
-
--- Thème (simulé)
-AddLabel(tabSettings, "Thème (actuel : Dark)", setY); setY = setY + 25
-local themeBtn = AddButton(tabSettings, "Changer de thème", function()
-    if AntonioHub.Settings.Theme == "Dark" then
-        AntonioHub.Settings.Theme = "Light"
-        main.BackgroundColor3 = Color3.fromRGB(240, 240, 250)
-        titleBar.BackgroundColor3 = Color3.fromRGB(220, 220, 235)
-        tabBar.BackgroundColor3 = Color3.fromRGB(210, 210, 225)
-        Notify("AntonioHub", "Thème Light activé.", 2)
-    else
-        AntonioHub.Settings.Theme = "Dark"
-        main.BackgroundColor3 = Color3.fromRGB(18, 18, 28)
-        titleBar.BackgroundColor3 = Color3.fromRGB(28, 28, 42)
-        tabBar.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-        Notify("AntonioHub", "Thème Dark activé.", 2)
+    vazY = vazY + 65
+    AddLabel(tabVaz, "URL du script :", vazY); vazY = vazY + 25
+    local urlLabel = Instance.new("TextLabel")
+    urlLabel.Size = UDim2.new(0, 480, 0, 35)
+    urlLabel.Position = UDim2.new(0.5, -240, 0, vazY)
+    urlLabel.BackgroundTransparency = 1
+    urlLabel.Text = "https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script"
+    urlLabel.TextColor3 = Color3.fromRGB(140,140,200)
+    urlLabel.Font = Enum.Font.SourceSans
+    urlLabel.TextSize = 12
+    urlLabel.TextWrapped = true
+    urlLabel.Parent = tabVaz
+    vazY = vazY + 45
+    local copyBtn = Instance.new("TextButton")
+    copyBtn.Size = UDim2.new(0, 150, 0, 32)
+    copyBtn.Position = UDim2.new(0.5, -75, 0, vazY)
+    copyBtn.BackgroundColor3 = Color3.fromRGB(45,45,70)
+    copyBtn.BorderSizePixel = 0
+    copyBtn.Text = "📋 Copier l'URL"
+    copyBtn.TextColor3 = Color3.fromRGB(210,210,240)
+    copyBtn.Font = Enum.Font.SourceSans
+    copyBtn.TextSize = 14
+    copyBtn.Parent = tabVaz
+    copyBtn.MouseButton1Click:Connect(function()
+        if setclipboard then setclipboard("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script") end
+        Notify("AntonioHub","URL copiée.",2)
+    end)
+    vazY = vazY + 45
+    AddLabel(tabVaz, "Scripts admin populaires :", vazY); vazY = vazY + 30
+    local popularScripts = {
+        {"Infinite Yield", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"},
+        {"Fates Admin", "https://raw.githubusercontent.com/fatesc/fates-admin/main/main.lua"},
+        {"HD Admin", "https://raw.githubusercontent.com/1ForeverHD/HDAdminV3/main/source.lua"}
+    }
+    for _, scriptData in ipairs(popularScripts) do
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(0, 250, 0, 32)
+        btn.Position = UDim2.new(0.5, -125, 0, vazY)
+        btn.BackgroundColor3 = Color3.fromRGB(40,40,65)
+        btn.BorderSizePixel = 0
+        btn.Text = "Charger "..scriptData[1]
+        btn.TextColor3 = Color3.fromRGB(200,200,230)
+        btn.Font = Enum.Font.SourceSans
+        btn.TextSize = 13
+        btn.Parent = tabVaz
+        btn.MouseButton1Click:Connect(function()
+            local success, err = pcall(function()
+                loadstring(game:HttpGet(scriptData[2]))()
+            end)
+            if success then Notify("AntonioHub", scriptData[1].." chargé.",3) else Notify("AntonioHub","Erreur "..scriptData[1].." : "..tostring(err),4) end
+        end)
+        vazY = vazY + 38
     end
-end, setY, 200); setY = setY + 48
+    tabVaz.CanvasSize = UDim2.new(0,0,0,vazY+30)
 
--- Taille de police
-AddLabel(tabSettings, "Taille de police : " .. AntonioHub.Settings.FontSize, setY); setY = setY + 25
-local fontBtn = AddButton(tabSettings, "Augmenter police", function()
-    AntonioHub.Settings.FontSize = math.min(22, AntonioHub.Settings.FontSize + 2)
-    for _, child in ipairs(main:GetDescendants()) do
-        if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
-            if child.TextSize then
-                child.TextSize = AntonioHub.Settings.FontSize
+    -- Onglet Paramètres
+    local setY = 10
+    AddLabel(tabSettings, "Paramètres :", setY); setY = setY + 30
+    AddLabel(tabSettings, "Thème (actuel : Dark)", setY); setY = setY + 25
+    local themeBtn = AddButton(tabSettings, "Changer de thème", function()
+        if AntonioHub.Settings.Theme == "Dark" then
+            AntonioHub.Settings.Theme = "Light"
+            main.BackgroundColor3 = Color3.fromRGB(240,240,250)
+            titleBar.BackgroundColor3 = Color3.fromRGB(220,220,235)
+            tabBar.BackgroundColor3 = Color3.fromRGB(210,210,225)
+            Notify("AntonioHub","Thème Light.",2)
+        else
+            AntonioHub.Settings.Theme = "Dark"
+            main.BackgroundColor3 = Color3.fromRGB(18,18,28)
+            titleBar.BackgroundColor3 = Color3.fromRGB(28,28,42)
+            tabBar.BackgroundColor3 = Color3.fromRGB(25,25,40)
+            Notify("AntonioHub","Thème Dark.",2)
+        end
+    end, setY, 200); setY = setY + 48
+    AddLabel(tabSettings, "Taille de police : "..AntonioHub.Settings.FontSize, setY); setY = setY + 25
+    local fontBtn = AddButton(tabSettings, "Augmenter police", function()
+        AntonioHub.Settings.FontSize = math.min(22, AntonioHub.Settings.FontSize + 2)
+        for _, child in ipairs(main:GetDescendants()) do
+            if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                if child.TextSize then child.TextSize = AntonioHub.Settings.FontSize end
             end
         end
-    end
-    Notify("AntonioHub", "Police : " .. AntonioHub.Settings.FontSize, 2)
-end, setY, 180); setY = setY + 42
-local fontBtn2 = AddButton(tabSettings, "Diminuer police", function()
-    AntonioHub.Settings.FontSize = math.max(10, AntonioHub.Settings.FontSize - 2)
-    for _, child in ipairs(main:GetDescendants()) do
-        if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
-            if child.TextSize then
-                child.TextSize = AntonioHub.Settings.FontSize
+        Notify("AntonioHub","Police : "..AntonioHub.Settings.FontSize,2)
+    end, setY, 180); setY = setY + 42
+    local fontBtn2 = AddButton(tabSettings, "Diminuer police", function()
+        AntonioHub.Settings.FontSize = math.max(10, AntonioHub.Settings.FontSize - 2)
+        for _, child in ipairs(main:GetDescendants()) do
+            if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
+                if child.TextSize then child.TextSize = AntonioHub.Settings.FontSize end
             end
         end
-    end
-    Notify("AntonioHub", "Police : " .. AntonioHub.Settings.FontSize, 2)
-end, setY, 180); setY = setY + 48
+        Notify("AntonioHub","Police : "..AntonioHub.Settings.FontSize,2)
+    end, setY, 180); setY = setY + 48
+    AddLabel(tabSettings, "Version : AntonioHub v2.0 - Tactile", setY, 20, Color3.fromRGB(150,150,180)); setY = setY + 30
+    tabSettings.CanvasSize = UDim2.new(0,0,0,setY+30)
 
--- Raccourci clavier
-AddLabel(tabSettings, "Raccourci : F2 pour ouvrir/fermer", setY); setY = setY + 30
-AddLabel(tabSettings, "Version : AntonioHub v2.0 - Inspiré de Infinite Yield, HD Admin, Nexus Admin", setY, 20, Color3.fromRGB(150, 150, 180)); setY = setY + 30
-
-tabSettings.CanvasSize = UDim2.new(0, 0, 0, setY + 30)
-    -- === GESTION DU DRAG (déplacement de la fenêtre) ===
+    -- Gestion du drag (tactile)
     local function DragStart(input)
         local pos = input.Position
-        local mainPos = main.Position
         AntonioHub.Dragging = true
         AntonioHub.DragStart = pos
-        AntonioHub.StartPos = mainPos
+        AntonioHub.StartPos = main.Position
     end
-    
     local function DragUpdate(input)
         if AntonioHub.Dragging then
             local delta = input.Position - AntonioHub.DragStart
@@ -1109,39 +854,34 @@ tabSettings.CanvasSize = UDim2.new(0, 0, 0, setY + 30)
             )
         end
     end
-    
     local function DragEnd()
         AntonioHub.Dragging = false
     end
-    
     titleBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             DragStart(input)
         end
     end)
-    
     titleBar.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement then
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement then
             DragUpdate(input)
         end
     end)
-    
     titleBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             DragEnd()
         end
     end)
-    
-    -- === MINIMISER ===
+
+    -- Minimiser / Fermer
     local minimized = false
     local originalSize = main.Size
     local originalPos = main.Position
-    
     minBtn.MouseButton1Click:Connect(function()
         minimized = not minimized
         if minimized then
-            main:TweenSize(UDim2.new(0, 220, 0, 35), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true)
-            main:TweenPosition(UDim2.new(0.5, -110, 0.92, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true)
+            main:TweenSize(UDim2.new(0,220,0,35), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true)
+            main:TweenPosition(UDim2.new(0.5,-110,0.92,0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.3, true)
             contentContainer.Visible = false
             searchBar.Visible = false
             minBtn.Text = "+"
@@ -1153,80 +893,68 @@ tabSettings.CanvasSize = UDim2.new(0, 0, 0, setY + 30)
             minBtn.Text = "—"
         end
     end)
-    
-    -- === FERMER ===
     closeBtn.MouseButton1Click:Connect(function()
         gui:Destroy()
     end)
-    
-    -- === RACCOURCI CLAVIER (F2 pour ouvrir/fermer) ===
-    UserInputService.InputBegan:Connect(function(input, processed)
-        if processed then return end
-        if input.KeyCode == Enum.KeyCode.F2 then
-            if gui.Parent then
-                gui.Enabled = not gui.Enabled
+
+    Notify("AntonioHub", "Interface tactile prête.", 3)
+end
+
+-- === BOUTON FLOTTANT POUR OUVRIR/FERMER (tactile) ===
+local function CreateToggleButton()
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "AntonioHubToggle"
+    screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+    local toggleBtn = Instance.new("TextButton")
+    toggleBtn.Size = UDim2.new(0, 70, 0, 70)
+    toggleBtn.Position = UDim2.new(1, -85, 0.5, -35)
+    toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
+    toggleBtn.BorderSizePixel = 2
+    toggleBtn.BorderColor3 = Color3.fromRGB(100, 100, 200)
+    toggleBtn.Text = "Menu"
+    toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleBtn.Font = Enum.Font.SourceSansBold
+    toggleBtn.TextSize = 18
+    toggleBtn.Parent = screenGui
+
+    local dragging = false
+    local dragStart, startPos
+    toggleBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = toggleBtn.Position
+        end
+    end)
+    toggleBtn.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            local delta = input.Position - dragStart
+            toggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                           startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+    toggleBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+
+    toggleBtn.MouseButton1Click:Connect(function()
+        if AntonioHub.GUI then
+            AntonioHub.GUI.Enabled = not AntonioHub.GUI.Enabled
+        else
+            CreateGUI()
+            wait(0.2)
+            if AntonioHub.GUI then
+                AntonioHub.GUI.Enabled = true
             end
         end
     end)
-    
-    -- === RACCOURCI POUR LA RECHERCHE (Ctrl+F) ===
-    UserInputService.InputBegan:Connect(function(input, processed)
-        if processed then return end
-        if input.KeyCode == Enum.KeyCode.F and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-            searchBox:CaptureFocus()
-        end
-    end)
-    
-    -- === INITIALISATION DE L'HISTORIQUE ===
-    UpdateHistory()
-    
-    Notify("AntonioHub", "Appuyez sur F2 pour ouvrir/fermer | Ctrl+F pour rechercher", 5)
 end
 
 -- === LANCEMENT ===
-pcall(CreateGUI)
-
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AntonioHubToggle"
-screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
-local toggleBtn = Instance.new("TextButton")
-toggleBtn.Size = UDim2.new(0, 60, 0, 60)
-toggleBtn.Position = UDim2.new(1, -70, 0.5, -30)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
-toggleBtn.BorderSizePixel = 0
-toggleBtn.Text = "Menu"
-toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.Font = Enum.Font.SourceSansBold
-toggleBtn.TextSize = 16
-toggleBtn.Parent = screenGui
-
--- Rendre le bouton déplaçable (optionnel)
-local dragging = false
-local dragStart, startPos
-toggleBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = toggleBtn.Position
-    end
-end)
-toggleBtn.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.Touch then
-        local delta = input.Position - dragStart
-        toggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
-                                       startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-toggleBtn.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
-
--- Bascule l'affichage du menu principal (AntonioHub.GUI)
-toggleBtn.MouseButton1Click:Connect(function()
-    if AntonioHub.GUI then
-        AntonioHub.GUI.Enabled = not AntonioHub.GUI.Enabled
-    end
+pcall(function()
+    CreateGUI()
+    CreateToggleButton()
 end)
