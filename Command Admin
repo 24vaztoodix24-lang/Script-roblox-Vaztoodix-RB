@@ -236,8 +236,7 @@ Commands:register("adminlist", {
     description = "Liste des joueurs",
     aliases = {"players","list"},
     usage = "adminlist"
-})
--- Suite de l'enregistrement des commandes
+}) -- Suite de l'enregistrement des commandes
 Commands:register("loopkill", {
     func = function(p)
         local t = GetPlayerByName(p)
@@ -345,6 +344,7 @@ Commands:register("jump", {
     aliases = {"jp"},
     usage = "jump [valeur]"
 })
+
 -- === CONSTRUCTION DE L'INTERFACE ===
 local function CreateGUI()
     local gui = Instance.new("ScreenGui")
@@ -496,88 +496,87 @@ local function CreateGUI()
             searchBox.Text = ""
         end)
         return content
-    end
+    end 
+local tabCmd = CreateTab("Commandes", 1)
+local tabPlayers = CreateTab("Joueurs", 2)
+local tabUtils = CreateTab("Utilitaires", 3)
+local tabVaz = CreateTab("Vaztoodix", 4)
+local tabSettings = CreateTab("Paramètres", 5)
 
-    local tabCmd = CreateTab("Commandes", 1)
-    local tabPlayers = CreateTab("Joueurs", 2)
-    local tabUtils = CreateTab("Utilitaires", 3)
-    local tabVaz = CreateTab("Vaztoodix", 4)
-    local tabSettings = CreateTab("Paramètres", 5)
+tabButtons["Commandes"]:BackgroundColor3 = Color3.fromRGB(70,70,120)
+tabButtons["Commandes"]:TextColor3 = Color3.fromRGB(255,255,255)
+tabContents["Commandes"].Visible = true
+AntonioHub.CurrentTab = "Commandes"
 
-    tabButtons["Commandes"]:BackgroundColor3 = Color3.fromRGB(70,70,120)
-    tabButtons["Commandes"]:TextColor3 = Color3.fromRGB(255,255,255)
-    tabContents["Commandes"].Visible = true
-    AntonioHub.CurrentTab = "Commandes"
+local function AddButton(parent, text, callback, yPos, width)
+    width = width or 220
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, width, 0, 36)
+    btn.Position = UDim2.new(0.5, -width/2, 0, yPos or 0)
+    btn.BackgroundColor3 = Color3.fromRGB(45,45,70)
+    btn.BorderSizePixel = 0
+    btn.Text = text
+    btn.TextColor3 = Color3.fromRGB(210,210,240)
+    btn.Font = Enum.Font.SourceSans
+    btn.TextSize = 14
+    btn.Parent = parent
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
 
-    local function AddButton(parent, text, callback, yPos, width)
-        width = width or 220
-        local btn = Instance.new("TextButton")
-        btn.Size = UDim2.new(0, width, 0, 36)
-        btn.Position = UDim2.new(0.5, -width/2, 0, yPos or 0)
-        btn.BackgroundColor3 = Color3.fromRGB(45,45,70)
-        btn.BorderSizePixel = 0
-        btn.Text = text
-        btn.TextColor3 = Color3.fromRGB(210,210,240)
-        btn.Font = Enum.Font.SourceSans
-        btn.TextSize = 14
-        btn.Parent = parent
-        btn.MouseButton1Click:Connect(callback)
-        return btn
-    end
+local function AddLabel(parent, text, yPos, size, color)
+    local lbl = Instance.new("TextLabel")
+    lbl.Size = UDim2.new(0, 450, 0, size or 25)
+    lbl.Position = UDim2.new(0.5, -225, 0, yPos or 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = text
+    lbl.TextColor3 = color or Color3.fromRGB(200,200,230)
+    lbl.Font = Enum.Font.SourceSans
+    lbl.TextSize = 14
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = parent
+    return lbl
+end
 
-    local function AddLabel(parent, text, yPos, size, color)
-        local lbl = Instance.new("TextLabel")
-        lbl.Size = UDim2.new(0, 450, 0, size or 25)
-        lbl.Position = UDim2.new(0.5, -225, 0, yPos or 0)
-        lbl.BackgroundTransparency = 1
-        lbl.Text = text
-        lbl.TextColor3 = color or Color3.fromRGB(200,200,230)
-        lbl.Font = Enum.Font.SourceSans
-        lbl.TextSize = 14
-        lbl.TextXAlignment = Enum.TextXAlignment.Left
-        lbl.Parent = parent
-        return lbl
-    end
+local function AddTextBox(parent, placeholder, callback, yPos, width)
+    width = width or 250
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0, width, 0, 32)
+    box.Position = UDim2.new(0.5, -width/2, 0, yPos or 0)
+    box.BackgroundColor3 = Color3.fromRGB(35,35,55)
+    box.BorderSizePixel = 1
+    box.BorderColor3 = Color3.fromRGB(55,55,90)
+    box.Text = ""
+    box.PlaceholderText = placeholder
+    box.TextColor3 = Color3.fromRGB(220,220,240)
+    box.PlaceholderColor3 = Color3.fromRGB(110,110,160)
+    box.Font = Enum.Font.SourceSans
+    box.TextSize = 14
+    box.Parent = parent
+    box.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            callback(box.Text)
+            box.Text = ""
+        end
+    end)
+    return box
+end
 
-    local function AddTextBox(parent, placeholder, callback, yPos, width)
-        width = width or 250
-        local box = Instance.new("TextBox")
-        box.Size = UDim2.new(0, width, 0, 32)
-        box.Position = UDim2.new(0.5, -width/2, 0, yPos or 0)
-        box.BackgroundColor3 = Color3.fromRGB(35,35,55)
-        box.BorderSizePixel = 1
-        box.BorderColor3 = Color3.fromRGB(55,55,90)
-        box.Text = ""
-        box.PlaceholderText = placeholder
-        box.TextColor3 = Color3.fromRGB(220,220,240)
-        box.PlaceholderColor3 = Color3.fromRGB(110,110,160)
-        box.Font = Enum.Font.SourceSans
-        box.TextSize = 14
-        box.Parent = parent
-        box.FocusLost:Connect(function(enterPressed)
-            if enterPressed then
-                callback(box.Text)
-                box.Text = ""
-            end
-        end)
-        return box
-    end
-
-    local function PerformSearch(query)
-        for _, child in ipairs(tabCmd:GetChildren()) do
-            if child:IsA("TextButton") or child:IsA("TextLabel") or child:IsA("TextBox") then
-                if query and query ~= "" then
-                    local text = child.Text or ""
-                    child.Visible = text:lower():find(query:lower()) ~= nil
-                else
-                    child.Visible = true
-                end
+local function PerformSearch(query)
+    for _, child in ipairs(tabCmd:GetChildren()) do
+        if child:IsA("TextButton") or child:IsA("TextLabel") or child:IsA("TextBox") then
+            if query and query ~= "" then
+                local text = child.Text or ""
+                child.Visible = text:lower():find(query:lower()) ~= nil
+            else
+                child.Visible = true
             end
         end
     end
-    searchBox.Changed:Connect(function(prop)
-        if prop == "Text" then PerformSearch(searchBox.Text) end
-    end)
+end
+searchBox.Changed:Connect(function(prop)
+    if prop == "Text" then PerformSearch(searchBox.Text) end
+end)
 -- Remplissage onglet Commandes
 local cmdY = 10
 AddLabel(tabCmd, "Commandes générales :", cmdY); cmdY = cmdY + 30
@@ -719,10 +718,10 @@ AddButton(tabUtils, "Infos serveur", function() local info = "Serveur : "..game.
 AddButton(tabUtils, "Anti-AFK", function() local vu=game:GetService("VirtualUser"); game:GetService("Players").LocalPlayer.Idled:Connect(function() vu:Button2Down(Vector2.new(0,0), workspace.CurrentCamera.CFrame); wait(1); vu:Button2Up(Vector2.new(0,0), workspace.CurrentCamera.CFrame) end); Notify("AntonioHub","Anti-AFK activé.",2) end, utilY); utilY = utilY + 42
 AddButton(tabUtils, "FPS Boost", function() settings().Rendering.QualityLevel = 1; Notify("AntonioHub","Qualité réduite.",2) end, utilY); utilY = utilY + 42
 tabUtils.CanvasSize = UDim2.new(0,0,0,utilY+30)
-    -- Onglet Vaztoodix
+
+    -- Onglet Vaztoodix (avec le nouveau lien)
     local vazY = 10
-    AddLabel(tabVaz, "Chargeur de script Vaztoodix :", vazY); vazY = vazY + 30
-    AddLabel(tabVaz, "Cliquez pour exécuter le script distant.", vazY); vazY = vazY + 30
+    AddLabel(tabVaz, "Chargeur de script Vaztoodix :", vazY); vazY = vazY + 30 AddLabel(tabVaz, "Cliquez pour exécuter le script distant.", vazY); vazY = vazY + 30
     local vazBtn = Instance.new("TextButton")
     vazBtn.Size = UDim2.new(0, 280, 0, 55)
     vazBtn.Position = UDim2.new(0.5, -140, 0, vazY)
@@ -736,7 +735,7 @@ tabUtils.CanvasSize = UDim2.new(0,0,0,utilY+30)
     vazBtn.Parent = tabVaz
     vazBtn.MouseButton1Click:Connect(function()
         local success, err = pcall(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Command%20Admin"))()
         end)
         if success then Notify("AntonioHub","Script Vaztoodix chargé.",3) else Notify("AntonioHub","Erreur : "..tostring(err),4) end
     end)
@@ -746,7 +745,7 @@ tabUtils.CanvasSize = UDim2.new(0,0,0,utilY+30)
     urlLabel.Size = UDim2.new(0, 480, 0, 35)
     urlLabel.Position = UDim2.new(0.5, -240, 0, vazY)
     urlLabel.BackgroundTransparency = 1
-    urlLabel.Text = "https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script"
+    urlLabel.Text = "https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Command%20Admin"
     urlLabel.TextColor3 = Color3.fromRGB(140,140,200)
     urlLabel.Font = Enum.Font.SourceSans
     urlLabel.TextSize = 12
@@ -764,7 +763,7 @@ tabUtils.CanvasSize = UDim2.new(0,0,0,utilY+30)
     copyBtn.TextSize = 14
     copyBtn.Parent = tabVaz
     copyBtn.MouseButton1Click:Connect(function()
-        if setclipboard then setclipboard("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Script") end
+        if setclipboard then setclipboard("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/Command%20Admin") end
         Notify("AntonioHub","URL copiée.",2)
     end)
     vazY = vazY + 45
