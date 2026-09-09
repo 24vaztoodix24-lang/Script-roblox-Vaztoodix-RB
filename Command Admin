@@ -1185,3 +1185,48 @@ end
 
 -- === LANCEMENT ===
 pcall(CreateGUI)
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "AntonioHubToggle"
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local toggleBtn = Instance.new("TextButton")
+toggleBtn.Size = UDim2.new(0, 60, 0, 60)
+toggleBtn.Position = UDim2.new(1, -70, 0.5, -30)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 80)
+toggleBtn.BorderSizePixel = 0
+toggleBtn.Text = "Menu"
+toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+toggleBtn.Font = Enum.Font.SourceSansBold
+toggleBtn.TextSize = 16
+toggleBtn.Parent = screenGui
+
+-- Rendre le bouton déplaçable (optionnel)
+local dragging = false
+local dragStart, startPos
+toggleBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = toggleBtn.Position
+    end
+end)
+toggleBtn.InputChanged:Connect(function(input)
+    if dragging and input.UserInputType == Enum.UserInputType.Touch then
+        local delta = input.Position - dragStart
+        toggleBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                       startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+toggleBtn.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Bascule l'affichage du menu principal (AntonioHub.GUI)
+toggleBtn.MouseButton1Click:Connect(function()
+    if AntonioHub.GUI then
+        AntonioHub.GUI.Enabled = not AntonioHub.GUI.Enabled
+    end
+end)
