@@ -1,0 +1,801 @@
+
+-- veuillez signaler les problèmes sur le serveur Discord.
+-- Rejoignez le Discord avec ce lien : https://discord.gg/wBkJwwXH7
+local VAZTOODIXUI_SOURCE = [==[
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local ContextActionService = game:GetService("ContextActionService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local GuiService = game:GetService("GuiService")
+
+if getgenv and getgenv().VAZTOODIXUI_CLEANUP then
+    pcall(getgenv().VAZTOODIXUI_CLEANUP)
+end
+
+local CONNS = {}
+local function keep(c)
+    table.insert(CONNS, c)
+    return c
+end
+
+local function sig(s)
+    return {
+        Connect = function(_, fn)
+            return keep(s:Connect(fn))
+        end
+    }
+end
+
+if getgenv then
+    getgenv().VAZTOODIXUI_CLEANUP = function()
+        for _, c in ipairs(CONNS) do
+            pcall(function()
+                c:Disconnect()
+            end)
+        end
+        table.clear(CONNS)
+    end
+end
+
+local Lucide
+pcall(function()
+    Lucide = loadstring(game:HttpGet("https://raw.githubusercontent.com/mstudio45/lucide-roblox-direct/refs/heads/main/source.lua"))()
+end)
+
+local T = {
+    root = Color3.fromRGB(24, 24, 24),
+    panel = Color3.fromRGB(30, 30, 30),
+    panelHover = Color3.fromRGB(37, 37, 37),
+    inset = Color3.fromRGB(28, 28, 28),
+    stroke = Color3.fromRGB(40, 40, 40),
+    strokeSoft = Color3.fromRGB(34, 34, 34),
+    text = Color3.fromRGB(255, 255, 255),
+    sub = Color3.fromRGB(150, 150, 150),
+    dim = Color3.fromRGB(108, 108, 108),
+    faint = Color3.fromRGB(84, 84, 84),
+    descText = Color3.fromRGB(124, 124, 124),
+    star = Color3.fromRGB(205, 205, 205),
+    onTrack = Color3.fromRGB(205, 205, 205),
+    onKnob = Color3.fromRGB(240, 240, 240),
+    offTrack = Color3.fromRGB(52, 52, 52),
+    offKnob = Color3.fromRGB(240, 240, 240),
+}
+
+local FAMILIES = {
+    ["Builder Sans"] = { Enum.Font.BuilderSans, Enum.Font.BuilderSansMedium, Enum.Font.BuilderSansBold },
+    ["Gotham"] = { Enum.Font.Gotham, Enum.Font.GothamMedium, Enum.Font.GothamBold },
+    ["Source Sans"] = { Enum.Font.SourceSans, Enum.Font.SourceSansSemibold, Enum.Font.SourceSansBold },
+    ["Ubuntu"] = { Enum.Font.Ubuntu, Enum.Font.Ubuntu, Enum.Font.Ubuntu },
+}
+
+local FAMILY_ORDER = { "Builder Sans", "Gotham", "Source Sans", "Ubuntu" }
+local FONT_REG, FONT, FONT_BOLD = table.unpack(FAMILIES["Builder Sans"])
+local TextService = game:GetService("TextService")
+local MOBILE = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+-- Script et interface utilisateur créés à l'origine par et téléchargés par https://robloxscripts.com/user/Fleece
+local TEXT_SCALE = MOBILE and 1.42 or 1.15
+local ROW_H = MOBILE and 78 or 62
+local ROW_H_COMPACT = MOBILE and 58 or 44
+local CAT_H = MOBILE and 52 or 40
+local SEARCH_H = MOBILE and 54 or 42
+local LOGO_ROW = MOBILE and 64 or 48
+local TOPBAR_H = LOGO_ROW + (MOBILE and 40 or 28)
+local HIT = MOBILE and 44 or 32
+local GLYPH = MOBILE and 20 or 16
+local FAST = 0.1
+local SLOW = 0.3
+
+local function new(className, props)
+    local p = Instance.new(className)
+    for k, v in pairs(props or {}) do
+        p[k] = v
+    end
+    return p
+end
+
+local function panel(props, bgTransparency)
+    local p = {
+        BackgroundColor3 = T.panel,
+        BackgroundTransparency = bgTransparency or 0,
+        BorderSizePixel = 0,
+    }
+    for k, v in pairs(props or {}) do
+        p[k] = v
+    end
+    return new("Frame", p)
+end
+
+local function stroke(parent, color, radius, alpha)
+    local s = new("Frame", {
+        BackgroundColor3 = color,
+        BackgroundTransparency = alpha or 1,
+        BorderSizePixel = 0,
+        Size = UDim2.fromScale(1, 1),
+        Position = UDim2.fromScale(0, 0),
+        ZIndex = 1,
+        Parent = parent,
+    })
+    if radius then
+        local c = Instance.new("UICorner")
+        c.CornerRadius = UDim.new(0, radius)
+        c.Parent = s
+    end
+    return s
+end
+
+local function tw(obj, dur, props)
+    return TweenService:Create(obj, TweenInfo.new(dur, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props)
+end
+
+local function mountPoint()
+    return game:GetService("CoreGui")
+end
+
+local function text(props)
+    local p = {
+        BackgroundTransparency = 1,
+        TextColor3 = T.text,
+        TextSize = 14,
+        Font = FONT,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+    }
+    for k, v in pairs(props or {}) do
+        p[k] = v
+    end
+    local base = p.TextSize or 14
+    p.TextSize = math.floor(base * TEXT_SCALE + 0.5)
+    local o = new("TextLabel", p)
+    o:SetAttribute("FontRole", p.Font == FONT_BOLD and "bold" or (p.Font == FONT_REG and "reg" or "med"))
+    o:SetAttribute("BaseTextSize", base)
+    return o
+end
+
+local iconCache = {}
+local function iconAsset(name)
+    local a = iconCache[name]
+    if a == nil then
+        a = (Lucide and Lucide.GetAsset(name)) or false
+        iconCache[name] = a
+    end
+    return a or nil
+end
+
+local function setIcon(im, name)
+    local a = iconAsset(name)
+    if a then
+        im.Image = a.Url
+        im.ImageRectOffset = a.ImageRectOffset
+        im.ImageRectSize = a.ImageRectSize
+    end
+    return im
+end
+
+local function icon(name, props)
+    local p = {
+        BackgroundTransparency = 1,
+        ImageColor3 = T.dim,
+        Size = UDim2.fromOffset(24, 24)
+    }
+    for k, v in pairs(props or {}) do
+        p[k] = v
+    end
+    return setIcon(new("ImageLabel", p), name)
+end
+
+local VaztoodixUI = {}
+VaztoodixUI.__index = VaztoodixUI
+
+function VaztoodixUI.new(cfg)
+    cfg = cfg or {}
+    local self = setmetatable({}, VaztoodixUI)
+    self.cfg = cfg
+    self.categories, self.tabs, self.allModules = {}, {}, {}
+    self.sections, self._order = {}, 0
+    self.activeCategory, self.activeTab = nil, nil
+    self.search = "" 
+local mount = mountPoint()
+-- Script et interface utilisateur créés à l'origine par et téléchargés par https://robloxscripts.com/user/Fleece
+
+if getgenv and getgenv().__vaztoodix_gui then
+    pcall(function()
+        getgenv().__vaztoodix_gui:Destroy()
+    end)
+end
+
+self.gui = new("ScreenGui", {
+    ResetOnSpawn = false,
+    IgnoreGuiInset = true,
+    ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+})
+protect(self.gui)
+self.gui.Parent = mount
+
+if getgenv then
+    getgenv().__vaztoodix_gui = self.gui
+    getgenv().VAZTOODIXUI = self
+end
+
+if STATE and STATE.onCleanup then
+    local g = self.gui
+    STATE.onCleanup(function()
+        pcall(function()
+            g:Destroy()
+        end)
+    end)
+end
+
+local W, H = cfg.Width or 820, cfg.Height or 520
+if MOBILE then
+    local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(900, 500)
+    local inset = GuiService:GetGuiInset()
+    W = math.floor(math.min(vp.X - 24, 1100))
+    H = math.floor(math.min(vp.Y - inset.Y - 24, 720))
+end
+
+self.root = panel({
+    Class = "CanvasGroup",
+    AnchorPoint = Vector2.new(0, 0),
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.fromOffset(W, H),
+    BackgroundColor3 = T.root,
+    ZIndex = 2,
+    Parent = self.gui,
+}, 10)
+self.rootStroke = stroke(self.root, T.strokeSoft, 10, 0.3)
+
+function self:Recenter()
+    local space = self.gui.AbsoluteSize
+    if space.X < 1 then
+        space = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
+    end
+    local rw, rh = self.root.AbsoluteSize.X, self.root.AbsoluteSize.Y
+    if rw < 1 then
+        rw, rh = W, H
+    end
+    local inset = GuiService:GetGuiInset()
+    local usableY = space.Y - inset.Y
+    self.root.Position = UDim2.fromOffset(
+        math.floor((space.X - rw) / 2 + 0.5),
+        inset.Y + math.floor((usableY - rh) / 2 + 0.5)
+    )
+end
+self:Recenter()
+
+task.defer(function()
+    self:Recenter()
+end)
+
+local top = panel({
+    Size = UDim2.new(1, 0, 0, TOPBAR_H),
+    BackgroundColor3 = T.panel,
+    BackgroundTransparency = 0,
+    ZIndex = 3,
+    Parent = self.root,
+})
+stroke(top, T.strokeSoft, 0, 0.3)
+
+local brandRow = new("Frame", {
+    Size = UDim2.fromOffset(0, 0),
+    AutomaticSize = Enum.AutomaticSize.X,
+    BackgroundTransparency = 1,
+    ZIndex = 4,
+    Parent = top,
+})
+new("UIListLayout", {
+    FillDirection = Enum.FillDirection.Horizontal,
+    VerticalAlignment = Enum.VerticalAlignment.Center,
+    Padding = UDim.new(0, 12),
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Parent = brandRow,
+})
+
+local function resolveLogo()
+    local L = cfg.Logo
+    if L and type(L) == "string" and L:sub(1, 4) == "rbx:" then
+        return L
+    end
+    local canFile = typeof(getcustomasset) == "function" and typeof(writefile) == "function"
+    if cfg.LogoUrl and canFile then
+        local path = cfg.LogoCache or "Vaztoodix MM2/logo.png"
+        local folder = path:match("^(.*)/[^/]+$")
+        if folder and typeof(isfolder) == "function" and not isfolder(folder) then
+            pcall(makefolder, folder)
+        end
+        if not (typeof(isfile) == "function" and isfile(path)) then
+            local ok, data = pcall(function()
+                return game:HttpGet(cfg.LogoUrl, true)
+            end)
+            if ok and type(data) == "string" and data:sub(2, 4) == "PNG" then
+                pcall(writefile, path, data)
+            end
+        end
+        if typeof(isfile) == "function" and isfile(path) then
+            local ok, id = pcall(getcustomasset, path)
+            if ok then
+                return id
+            end
+        end
+    end
+    if L and canFile and typeof(isfile) == "function" and isfile(L) then
+        local ok, id = pcall(getcustomasset, L)
+        if ok then
+            return id
+        end
+    end
+    return nil
+end
+
+local logoId = resolveLogo()
+self.logoId = logoId
+
+local brand
+if logoId then
+    local h = cfg.LogoHeight or 24
+    brand = new("ImageLabel", {
+        Image = logoId,
+        BackgroundTransparency = 1,
+        ScaleType = Enum.ScaleType.Fit,
+        Size = UDim2.fromOffset(math.floor(h * (cfg.LogoAspect or 3) + 0.5), h),
+        LayoutOrder = 1,
+        ZIndex = 4,
+        Parent = brandRow,
+    })
+else
+    brand = text({
+        Text = cfg.Title or "Vaztoodix ™Rb",
+        Font = FONT_BOLD,
+        TextSize = 18,
+        TextColor3 = T.text,
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        LayoutOrder = 1,
+        ZIndex = 4,
+        Parent = brandRow,
+    })
+end
+
+if not logoId and cfg.Version then
+    local badge = panel({
+        Size = UDim2.fromOffset(27, 16),
+        BackgroundColor3 = Color3.fromRGB(48, 48, 48),
+        LayoutOrder = 2,
+        ZIndex = 4,
+        Parent = brandRow,
+    }, 4)
+    text({
+        Text = cfg.Version,
+        Font = FONT_BOLD,
+        TextSize = 10,
+        TextColor3 = T.sub,
+        Size = UDim2.fromScale(1, 1),
+        TextXAlignment = Enum.TextXAlignment.Center,
+        ZIndex = 6,
+        Parent = badge,
+    })
+end
+
+local tabHolder = new("Frame", {
+    Position = UDim2.fromOffset(22, LOGO_ROW),
+    Size = UDim2.new(1, -44, 0, TOPBAR_H - LOGO_ROW),
+    BackgroundTransparency = 1,
+    ZIndex = 3,
+    Parent = top,
+})
+new("UIListLayout", {
+    FillDirection = Enum.FillDirection.Horizontal,
+    VerticalAlignment = Enum.VerticalAlignment.Center,
+    Padding = UDim.new(0, 30),
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Parent = tabHolder,
+})
+self.tabHolder = tabHolder 
+local function iconRow(width, gap)
+    local f = new("Frame", {
+        Size = UDim2.fromOffset(width, LOGO_ROW),
+        BackgroundTransparency = 1,
+        ZIndex = 3,
+        Parent = top,
+    })
+    new("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalAlignment = Enum.HorizontalAlignment.Center,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, gap),
+        Parent = f,
+    })
+    return f
+end
+
+local TOOL_W, WIN_W = HIT * 2 + 18, HIT * 3 + 12 * 2
+self.midIcons = iconRow(TOOL_W, 18)
+self.winIcons = iconRow(WIN_W, 12)
+self.winIcons.Position = UDim2.new(1, -WIN_W - 18, 0, 0)
+
+local function topIcon(parent, name, cb, hoverColor)
+    local b = new("TextButton", {
+        Size = UDim2.fromOffset(HIT, HIT),
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        LayoutOrder = #parent:GetChildren(),
+        ZIndex = 4,
+        Parent = parent,
+    })
+    local im = icon(name, {
+        Size = UDim2.fromOffset(GLYPH, GLYPH),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.fromScale(0.5, 0.5),
+        ImageColor3 = T.dim,
+        ZIndex = 5,
+        Parent = b,
+    })
+    b.MouseEnter:Connect(function()
+        if BLOCKED.on then return end
+        tw(im, FAST, { ImageColor3 = hoverColor or T.text })
+    end)
+    b.MouseLeave:Connect(function()
+        tw(im, FAST, { ImageColor3 = T.dim })
+    end)
+    b.MouseButton1Click:Connect(function()
+        if BLOCKED.on then return end
+        cb()
+    end)
+    return b
+end
+
+-- Ajout des icônes de la barre supérieure (exemples)
+topIcon(self.midIcons, "chevron-left", function() self:PrevTab() end, T.text)
+topIcon(self.midIcons, "chevron-right", function() self:NextTab() end, T.text)
+
+topIcon(self.winIcons, "menu", function() self:ToggleSidebar() end, T.text)
+topIcon(self.winIcons, "x", function() self:Close() end, Color3.fromRGB(255, 80, 80))
+
+-- Corps principal
+local body = panel({
+    Size = UDim2.new(1, 0, 1, -TOPBAR_H),
+    Position = UDim2.new(0, 0, 0, TOPBAR_H),
+    BackgroundColor3 = T.root,
+    ZIndex = 2,
+    Parent = self.root,
+}, 0)
+
+-- Sidebar (catégories)
+local sidebar = panel({
+    Size = UDim2.fromOffset(200, 1),
+    BackgroundColor3 = T.panel,
+    ZIndex = 3,
+    Parent = body,
+}, 0)
+stroke(sidebar, T.strokeSoft, 0, 0.3)
+
+local catList = new("ScrollingFrame", {
+    Size = UDim2.new(1, 0, 1, 0),
+    BackgroundTransparency = 1,
+    ScrollBarThickness = 4,
+    ScrollBarImageColor3 = T.faint,
+    ScrollBarImageTransparency = 0.8,
+    ZIndex = 4,
+    Parent = sidebar,
+})
+new("UIListLayout", {
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 2),
+    Parent = catList,
+})
+self.catList = catList
+
+local contentArea = panel({
+    Size = UDim2.new(1, -200, 1, 0),
+    Position = UDim2.new(1, 0, 0, 0),
+    BackgroundColor3 = T.root,
+    ZIndex = 2,
+    Parent = body,
+}, 0)
+
+-- Zone de recherche
+local searchBar = new("Frame", {
+    Size = UDim2.new(1, -24, 0, SEARCH_H),
+    Position = UDim2.new(0, 12, 0, 8),
+    BackgroundColor3 = T.inset,
+    BackgroundTransparency = 0.8,
+    ZIndex = 3,
+    Parent = contentArea,
+})
+Instance.new("UICorner").CornerRadius = UDim.new(0, 8)
+local searchIcon = icon("search", {
+    Size = UDim2.fromOffset(GLYPH, GLYPH),
+    Position = UDim2.new(0, 10, 0.5, 0),
+    AnchorPoint = Vector2.new(0, 0.5),
+    ImageColor3 = T.dim,
+    ZIndex = 4,
+    Parent = searchBar,
+})
+local searchBox = new("TextBox", {
+    Size = UDim2.new(1, -40, 1, 0),
+    Position = UDim2.new(0, 36, 0, 0),
+    BackgroundTransparency = 1,
+    Text = "",
+    TextColor3 = T.text,
+    Font = FONT,
+    TextSize = 14 * TEXT_SCALE,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    PlaceholderText = "Rechercher...",
+    PlaceholderColor3 = T.dim,
+    ZIndex = 4,
+    Parent = searchBar,
+    ClearTextOnFocus = false,
+})
+self.searchBox = searchBox
+self.searchBar = searchBar
+-- Zone de contenu (modules)
+local moduleContainer = new("ScrollingFrame", {
+    Size = UDim2.new(1, 0, 1, -SEARCH_H - 20),
+    Position = UDim2.new(0, 0, 0, SEARCH_H + 16),
+    BackgroundTransparency = 1,
+    ScrollBarThickness = 6,
+    ScrollBarImageColor3 = T.faint,
+    ScrollBarImageTransparency = 0.6,
+    ZIndex = 2,
+    Parent = contentArea,
+})
+new("UIListLayout", {
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 6),
+    Parent = moduleContainer,
+})
+self.moduleContainer = moduleContainer
+
+-- Fonctions internes pour ajouter catégories, onglets, modules
+function self:AddCategory(name)
+    local btn = new("TextButton", {
+        Size = UDim2.new(1, -12, 0, CAT_H),
+        Position = UDim2.new(0, 6, 0, 0),
+        BackgroundTransparency = 1,
+        Text = name,
+        TextColor3 = T.sub,
+        Font = FONT,
+        TextSize = 14 * TEXT_SCALE,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        ZIndex = 5,
+        Parent = self.catList,
+        AutoButtonColor = false,
+    })
+    local line = new("Frame", {
+        Size = UDim2.new(0, 3, 0.6, 0),
+        Position = UDim2.new(0, -6, 0.5, 0),
+        AnchorPoint = Vector2.new(0, 0.5),
+        BackgroundColor3 = T.star,
+        BackgroundTransparency = 1,
+        ZIndex = 6,
+        Parent = btn,
+    })
+    btn.MouseEnter:Connect(function()
+        tw(btn, FAST, { TextColor3 = T.text })
+    end)
+    btn.MouseLeave:Connect(function()
+        if self.activeCategory ~= name then
+            tw(btn, FAST, { TextColor3 = T.sub })
+        end
+    end)
+    btn.MouseButton1Click:Connect(function()
+        self:SetCategory(name)
+    end)
+    self.categories[name] = { button = btn, line = line, tabs = {} }
+    if not self.activeCategory then
+        self:SetCategory(name)
+    end
+    return self
+end
+
+function self:AddTab(category, tabName)
+    local cat = self.categories[category]
+    if not cat then return self end
+    local tab = { name = tabName, modules = {} }
+    table.insert(cat.tabs, tab)
+    if not self.activeTab then
+        self:SetTab(category, tabName)
+    end
+    -- Mettre à jour les onglets en haut
+    self:RefreshTabs()
+    return self
+end
+
+function self:RefreshTabs()
+    for _, child in ipairs(self.tabHolder:GetChildren()) do
+        if child:IsA("TextButton") then child:Destroy() end
+    end
+    local cat = self.categories[self.activeCategory]
+    if not cat then return end
+    for _, tab in ipairs(cat.tabs) do
+        local btn = new("TextButton", {
+            Size = UDim2.fromOffset(0, TOPBAR_H - LOGO_ROW - 4),
+            AutomaticSize = Enum.AutomaticSize.X,
+            BackgroundTransparency = 1,
+            Text = tab.name,
+            TextColor3 = (tab.name == self.activeTab) and T.text or T.dim,
+            Font = FONT_BOLD,
+            TextSize = 14 * TEXT_SCALE,
+            TextXAlignment = Enum.TextXAlignment.Center,
+            TextYAlignment = Enum.TextYAlignment.Center,
+            ZIndex = 4,
+            Parent = self.tabHolder,
+            AutoButtonColor = false,
+        })
+        btn.MouseButton1Click:Connect(function()
+            self:SetTab(self.activeCategory, tab.name)
+        end)
+    end
+end
+
+function self:SetCategory(name)
+    self.activeCategory = name
+    for cat, data in pairs(self.categories) do
+        local col = (cat == name) and T.text or T.sub
+        data.button.TextColor3 = col
+        data.line.BackgroundTransparency = (cat == name) and 0 or 1
+    end
+    local cat = self.categories[name]
+    if cat and #cat.tabs > 0 then
+        self:SetTab(name, cat.tabs[1].name)
+    else
+        self.activeTab = nil
+        self:RefreshTabs()
+    end
+end
+
+function self:SetTab(category, tabName)
+    self.activeTab = tabName
+    self:RefreshTabs()
+    self:RenderModules()
+end 
+    function self:RenderModules()
+        for _, child in ipairs(self.moduleContainer:GetChildren()) do
+            if child:IsA("Frame") then child:Destroy() end
+        end
+        local cat = self.categories[self.activeCategory]
+        if not cat then return end
+        local tab = nil
+        for _, t in ipairs(cat.tabs) do
+            if t.name == self.activeTab then tab = t break end
+        end
+        if not tab then return end
+        for _, mod in ipairs(tab.modules) do
+            local frame = panel({
+                Size = UDim2.new(1, -12, 0, ROW_H),
+                Position = UDim2.new(0, 6, 0, 0),
+                BackgroundColor3 = T.panel,
+                ZIndex = 2,
+                Parent = self.moduleContainer,
+            }, 0)
+            Instance.new("UICorner").CornerRadius = UDim.new(0, 6)
+            local label = text({
+                Text = mod.name,
+                TextSize = 14,
+                Font = FONT_BOLD,
+                TextColor3 = T.text,
+                Size = UDim2.new(0.6, -12, 1, 0),
+                Position = UDim2.new(0, 12, 0, 0),
+                ZIndex = 3,
+                Parent = frame,
+            })
+            if mod.desc then
+                local desc = text({
+                    Text = mod.desc,
+                    TextSize = 11,
+                    Font = FONT_REG,
+                    TextColor3 = T.descText,
+                    Size = UDim2.new(0.6, -12, 0.5, 0),
+                    Position = UDim2.new(0, 12, 0.6, 0),
+                    ZIndex = 3,
+                    Parent = frame,
+                })
+            end
+            -- Bouton d'action (exemple)
+            local action = new("TextButton", {
+                Size = UDim2.fromOffset(80, 30),
+                Position = UDim2.new(1, -96, 0.5, 0),
+                AnchorPoint = Vector2.new(0, 0.5),
+                BackgroundColor3 = T.stroke,
+                Text = "Exécuter",
+                TextColor3 = T.text,
+                Font = FONT_BOLD,
+                TextSize = 12 * TEXT_SCALE,
+                ZIndex = 3,
+                Parent = frame,
+                AutoButtonColor = false,
+            })
+            Instance.new("UICorner").CornerRadius = UDim.new(0, 4)
+            action.MouseButton1Click:Connect(function()
+                if mod.callback then
+                    mod.callback()
+                end
+            end)
+        end
+    end
+
+    function self:AddModule(category, tabName, mod)
+        local cat = self.categories[category]
+        if not cat then return self end
+        for _, t in ipairs(cat.tabs) do
+            if t.name == tabName then
+                table.insert(t.modules, mod)
+                break
+            end
+        end
+        self:RenderModules()
+        return self
+    end
+
+    function self:PrevTab()
+        local cat = self.categories[self.activeCategory]
+        if not cat or #cat.tabs == 0 then return end
+        local idx = nil
+        for i, t in ipairs(cat.tabs) do
+            if t.name == self.activeTab then idx = i break end
+        end
+        idx = (idx and idx > 1) and idx - 1 or #cat.tabs
+        self:SetTab(self.activeCategory, cat.tabs[idx].name)
+    end
+
+    function self:NextTab()
+        local cat = self.categories[self.activeCategory]
+        if not cat or #cat.tabs == 0 then return end
+        local idx = nil
+        for i, t in ipairs(cat.tabs) do
+            if t.name == self.activeTab then idx = i break end
+        end
+        idx = (idx and idx < #cat.tabs) and idx + 1 or 1
+        self:SetTab(self.activeCategory, cat.tabs[idx].name)
+    end
+
+    function self:ToggleSidebar()
+        -- Simplifié : afficher/masquer la sidebar
+        local vis = sidebar.Visible
+        sidebar.Visible = not vis
+        contentArea.Size = UDim2.new(vis and 1 or 1, vis and -200 or 0, 1, 0)
+    end
+
+    function self:Close()
+        self.gui:Destroy()
+        if getgenv then getgenv().VAZTOODIXUI = nil end
+    end
+
+    -- Recherche
+    searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        self.search = searchBox.Text
+        self:RenderModules() -- filtrage à implémenter
+    end)
+
+    -- Exemple d'ajout de catégorie, onglet et module
+    self:AddCategory("Général")
+    self:AddTab("Général", "Accueil")
+    self:AddModule("Général", "Accueil", {
+        name = "Bienvenue",
+        desc = "Ceci est un module exemple.",
+        callback = function() print("Module exécuté") end
+    })
+
+    return self
+end
+
+-- Exécution du constructeur
+local ui = VaztoodixUI.new({
+    Title = "Vaztoodix ™Rb",
+    Version = "v1.0",
+})
+
+-- Exposer l'instance globalement
+_G.VaztoodixUI = ui
+]]--
+
+-- Chargement et exécution du script modifié
+local success, err = pcall(function()
+    loadstring(VAZTOODIXUI_SOURCE)()
+end)
+if not success then
+    warn("Erreur lors du chargement du script Vaztoodix ™Rb : " .. tostring(err))
+end
