@@ -1,4 +1,0 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/part1.lua"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/part2.lua"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/part3.lua"))()
-loadstring(game:HttpGet("https://raw.githubusercontent.com/24vaztoodix24-lang/Script-roblox-Vaztoodix-RB/refs/heads/main/part4.lua"))()
