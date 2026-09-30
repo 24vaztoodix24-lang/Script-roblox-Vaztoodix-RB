@@ -1,4 +1,4 @@
--- PARTIE 1/4 - Interface Vaztoodix UI v8 (contour vert pour Effets)
+-- PARTIE 1/4 - Interface Vaztoodix UI v9 (barre de recherche + contour vert Effets)
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -232,8 +232,43 @@ function VaztoodixUI.new(cfg)
         ZIndex = 4, Parent = contentArea,
     })
 
+    -- ============================================================
+    -- BARRE DE RECHERCHE
+    -- ============================================================
+    self.searchBar = new("Frame", {
+        Size = UDim2.new(1, -16, 0, 22),
+        Position = UDim2.fromOffset(8, 38),
+        BackgroundColor3 = T.textbox,
+        BorderSizePixel = 0,
+        ZIndex = 4,
+        Parent = contentArea,
+    })
+    Instance.new("UICorner", self.searchBar).CornerRadius = UDim.new(0, 6)
+    local searchStroke = Instance.new("UIStroke")
+    searchStroke.Color = T.stroke
+    searchStroke.Thickness = 1
+    searchStroke.Transparency = 0.4
+    searchStroke.Parent = self.searchBar
+
+    self.searchBox = new("TextBox", {
+        Size = UDim2.new(1, -16, 1, 0),
+        Position = UDim2.fromOffset(8, 0),
+        BackgroundTransparency = 1,
+        Text = "",
+        TextColor3 = T.text,
+        Font = FONT,
+        TextSize = 10,
+        PlaceholderText = "🔍 Rechercher une fonction...",
+        PlaceholderColor3 = T.dim,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ClearTextOnFocus = false,
+        ZIndex = 5,
+        Parent = self.searchBar,
+    })
+
     self.scroll = new("ScrollingFrame", {
-        Size = UDim2.new(1, -6, 1, -50), Position = UDim2.fromOffset(3, 38),
+        Size = UDim2.new(1, -6, 1, -70),     -- -70 pour laisser la place à la recherche
+        Position = UDim2.fromOffset(3, 64),   -- 64 pour descendre sous la recherche
         BackgroundTransparency = 1, BorderSizePixel = 0,
         ScrollBarThickness = 6, ScrollBarImageColor3 = T.accent,
         ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -342,10 +377,24 @@ function VaztoodixUI.new(cfg)
         for _, t in ipairs(cat.tabs) do if t.name == cat.currentTab then tab = t break end end
         if not tab then return end
 
+        -- FILTRAGE PAR RECHERCHE
+        local searchText = string.lower(self.searchBox.Text)
+        local filteredModules = {}
+        if searchText ~= "" then
+            for _, mod in ipairs(tab.modules) do
+                if string.find(string.lower(mod.name), searchText, 1, true) or
+                   (mod.desc and string.find(string.lower(mod.desc), searchText, 1, true)) then
+                    table.insert(filteredModules, mod)
+                end
+            end
+        else
+            filteredModules = tab.modules
+        end
+
         local isEffects = (self.activeCategory == "sparkles")
         local count = 0
 
-        for _, mod in ipairs(tab.modules) do
+        for _, mod in ipairs(filteredModules) do
             count = count + 1
             local card = new("TextButton", {
                 BackgroundColor3 = T.card, BackgroundTransparency = 0.15,
@@ -353,7 +402,6 @@ function VaztoodixUI.new(cfg)
             })
             Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
 
-            -- CONTOUR VERT ÉPAIS POUR EFFETS
             local cardStroke = Instance.new("UIStroke")
             if isEffects then
                 cardStroke.Color = T.green
@@ -421,7 +469,6 @@ function VaztoodixUI.new(cfg)
                 if mod.default then self.statusList[mod.name] = true dot.BackgroundColor3 = T.success end
             end
 
-            -- Hover
             card.MouseEnter:Connect(function()
                 tw(card, 0.15, { BackgroundTransparency = 0, BackgroundColor3 = T.card:Lerp(T.accent, 0.2) }):Play()
                 if isEffects then
@@ -510,9 +557,14 @@ function VaztoodixUI.new(cfg)
         notif:Destroy()
     end
 
+    -- Filtrage en temps réel quand on tape
+    self.searchBox:GetPropertyChangedSignal("Text"):Connect(function()
+        self:RenderModules()
+    end)
+
     task.defer(function() self:SetCategory("home") end)
     return self
 end
 
 _G.VaztoodixUI = VaztoodixUI
-print("✅ Partie 1/4 chargée - Contour vert pour Effets")
+print("✅ Partie 1/4 chargée - Barre de recherche + contour vert Effets")
