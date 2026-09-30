@@ -1,4 +1,4 @@
--- PARTIE 1/4 - Interface Vaztoodix UI v9 (barre de recherche + contour vert Effets)
+-- PARTIE 1/4 - Interface Vaztoodix UI v10 (recherche globale + contour vert Sin Dragon)
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
@@ -71,6 +71,7 @@ function VaztoodixUI.new(cfg)
     self.glowing = true
     self.uiScale = 1
     self.bgMode = 1
+    self.searchMode = false
 
     local mount = game:GetService("CoreGui")
     if getgenv and getgenv().__vaztoodix_gui then pcall(function() getgenv().__vaztoodix_gui:Destroy() end) end
@@ -232,9 +233,6 @@ function VaztoodixUI.new(cfg)
         ZIndex = 4, Parent = contentArea,
     })
 
-    -- ============================================================
-    -- BARRE DE RECHERCHE
-    -- ============================================================
     self.searchBar = new("Frame", {
         Size = UDim2.new(1, -16, 0, 22),
         Position = UDim2.fromOffset(8, 38),
@@ -258,7 +256,7 @@ function VaztoodixUI.new(cfg)
         TextColor3 = T.text,
         Font = FONT,
         TextSize = 10,
-        PlaceholderText = "🔍 Rechercher une fonction...",
+        PlaceholderText = "🔍 Rechercher dans toutes les catégories...",
         PlaceholderColor3 = T.dim,
         TextXAlignment = Enum.TextXAlignment.Left,
         ClearTextOnFocus = false,
@@ -267,8 +265,8 @@ function VaztoodixUI.new(cfg)
     })
 
     self.scroll = new("ScrollingFrame", {
-        Size = UDim2.new(1, -6, 1, -70),     -- -70 pour laisser la place à la recherche
-        Position = UDim2.fromOffset(3, 64),   -- 64 pour descendre sous la recherche
+        Size = UDim2.new(1, -6, 1, -70),
+        Position = UDim2.fromOffset(3, 64),
         BackgroundTransparency = 1, BorderSizePixel = 0,
         ScrollBarThickness = 6, ScrollBarImageColor3 = T.accent,
         ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -371,31 +369,51 @@ function VaztoodixUI.new(cfg)
         for _, child in ipairs(self.scroll:GetChildren()) do
             if child:IsA("Frame") or child:IsA("TextButton") then child:Destroy() end
         end
-        local cat = self.categories[self.activeCategory]
-        if not cat then return end
-        local tab
-        for _, t in ipairs(cat.tabs) do if t.name == cat.currentTab then tab = t break end end
-        if not tab then return end
 
-        -- FILTRAGE PAR RECHERCHE
         local searchText = string.lower(self.searchBox.Text)
-        local filteredModules = {}
-        if searchText ~= "" then
-            for _, mod in ipairs(tab.modules) do
-                if string.find(string.lower(mod.name), searchText, 1, true) or
-                   (mod.desc and string.find(string.lower(mod.desc), searchText, 1, true)) then
-                    table.insert(filteredModules, mod)
+        local isSearching = (searchText ~= "")
+        self.searchMode = isSearching
+
+        -- Construction de la liste des modules à afficher
+        local modulesToShow = {}
+
+        if isSearching then
+            -- RECHERCHE GLOBALE : parcourt toutes les catégories et tous les onglets
+            self.catTitle.Text = "🔍 Résultats de recherche"
+            self.catDesc.Text = "Recherche dans toutes les catégories"
+            for catName, catData in pairs(self.categories) do
+                for _, tabData in ipairs(catData.tabs) do
+                    for _, mod in ipairs(tabData.modules) do
+                        local match = string.find(string.lower(mod.name), searchText, 1, true)
+                        if not match and mod.desc then
+                            match = string.find(string.lower(mod.desc), searchText, 1, true)
+                        end
+                        if match then
+                            table.insert(modulesToShow, { mod = mod, cat = catName, tab = tabData.name })
+                        end
+                    end
                 end
             end
         else
-            filteredModules = tab.modules
+            -- AFFICHAGE NORMAL : seulement l'onglet actif
+            local cat = self.categories[self.activeCategory]
+            if not cat then return end
+            local tab
+            for _, t in ipairs(cat.tabs) do if t.name == cat.currentTab then tab = t break end end
+            if not tab then return end
+            for _, mod in ipairs(tab.modules) do
+                table.insert(modulesToShow, { mod = mod, cat = self.activeCategory, tab = tab.name })
+            end
         end
 
-        local isEffects = (self.activeCategory == "sparkles")
         local count = 0
-
-        for _, mod in ipairs(filteredModules) do
+        for _, entry in ipairs(modulesToShow) do
+            local mod = entry.mod
             count = count + 1
+
+            -- Détection du contour vert (Effets OU Sin Dragon)
+            local isGreen = (entry.cat == "sparkles") or (entry.tab == "Sin Dragon")
+
             local card = new("TextButton", {
                 BackgroundColor3 = T.card, BackgroundTransparency = 0.15,
                 Text = "", ZIndex = 3, Parent = self.scroll, AutoButtonColor = false, LayoutOrder = count,
@@ -403,7 +421,7 @@ function VaztoodixUI.new(cfg)
             Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
 
             local cardStroke = Instance.new("UIStroke")
-            if isEffects then
+            if isGreen then
                 cardStroke.Color = T.green
                 cardStroke.Thickness = 3
                 cardStroke.Transparency = 0
@@ -414,7 +432,13 @@ function VaztoodixUI.new(cfg)
             end
             cardStroke.Parent = card
 
-            text({ Text = mod.name, Font = FONT_BOLD, TextSize = 10, TextColor3 = T.text, Position = UDim2.fromOffset(6, 3), Size = UDim2.new(1, -22, 0, 14), TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 4, Parent = card })
+            -- Affichage du nom (avec indication de catégorie en mode recherche)
+            local displayName = mod.name
+            if isSearching then
+                displayName = mod.name .. " [" .. entry.cat .. "]"
+            end
+
+            text({ Text = displayName, Font = FONT_BOLD, TextSize = 10, TextColor3 = T.text, Position = UDim2.fromOffset(6, 3), Size = UDim2.new(1, -22, 0, 14), TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 4, Parent = card })
             if mod.desc and not mod.textbox and not mod.slider then
                 text({ Text = mod.desc, Font = FONT, TextSize = 8, TextColor3 = T.sub, Position = UDim2.fromOffset(6, 18), Size = UDim2.new(1, -12, 0, 20), TextWrapped = true, ZIndex = 4, Parent = card })
             end
@@ -471,7 +495,7 @@ function VaztoodixUI.new(cfg)
 
             card.MouseEnter:Connect(function()
                 tw(card, 0.15, { BackgroundTransparency = 0, BackgroundColor3 = T.card:Lerp(T.accent, 0.2) }):Play()
-                if isEffects then
+                if isGreen then
                     tw(cardStroke, 0.15, { Transparency = 0, Color = T.green, Thickness = 3 }):Play()
                 else
                     tw(cardStroke, 0.15, { Transparency = 0.1, Color = T.accent }):Play()
@@ -479,7 +503,7 @@ function VaztoodixUI.new(cfg)
             end)
             card.MouseLeave:Connect(function()
                 tw(card, 0.15, { BackgroundTransparency = 0.15, BackgroundColor3 = T.card }):Play()
-                if isEffects then
+                if isGreen then
                     tw(cardStroke, 0.15, { Transparency = 0, Color = T.green, Thickness = 3 }):Play()
                 else
                     tw(cardStroke, 0.15, { Transparency = 0.4, Color = T.stroke }):Play()
@@ -557,7 +581,6 @@ function VaztoodixUI.new(cfg)
         notif:Destroy()
     end
 
-    -- Filtrage en temps réel quand on tape
     self.searchBox:GetPropertyChangedSignal("Text"):Connect(function()
         self:RenderModules()
     end)
@@ -567,4 +590,4 @@ function VaztoodixUI.new(cfg)
 end
 
 _G.VaztoodixUI = VaztoodixUI
-print("✅ Partie 1/4 chargée - Barre de recherche + contour vert Effets")
+print("✅ Partie 1/4 chargée - Recherche globale + contour vert Sin Dragon + Effets")
