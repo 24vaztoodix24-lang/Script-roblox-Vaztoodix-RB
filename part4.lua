@@ -1,4 +1,4 @@
--- PARTIE 4/4 - Modules + Paramètres + Fonctions Admin + Lancement
+-- PARTIE 4/4 - Modules + Paramètres + Admin + Lancement
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -41,11 +41,11 @@ ui:AddModule("home", "Bienvenue", {
 -- ARMES
 -- ============================================================
 ui:AddTab("sword", "Armes 1-hit")
-ui:AddModule("sword", "Armes 1-hit", { name = "zizi Tranchant", desc = "Portée 500", toggle = true, default = true, callback = function() if not p.Backpack:FindFirstChild("zizi Tranchant") then VAZ.CreerArmeRoblox("zizi Tranchant", "93136674", 500) end end })
-ui:AddModule("sword", "Armes 1-hit", { name = "Micha Minivichi", desc = "Portée 600", toggle = true, default = true, callback = function() if not p.Backpack:FindFirstChild("Micha Minivichi") then VAZ.CreerArmeRoblox("Micha Minivichi", "12187319", 600) end end })
-ui:AddModule("sword", "Armes 1-hit", { name = "Loucybel_Facher ★", desc = "Marteau explosif", toggle = true, default = true, callback = function() if not p.Backpack:FindFirstChild("Loucybel_Facher") then VAZ.CreerArmeMarteau("478707595", "334753747") end end })
-ui:AddModule("sword", "Armes 1-hit", { name = "istadyxx26 ★", desc = "Arme spéciale", toggle = true, default = true, callback = function() if not p.Backpack:FindFirstChild("istadyxx26") then VAZ.CreerArmeSpecial() end end })
-ui:AddModule("sword", "Armes 1-hit", { name = "Épées orbitales", desc = "6 épées tournoyantes", toggle = true, default = true, callback = function() VAZ.SWORDS_ACTIVE = not VAZ.SWORDS_ACTIVE if VAZ.SWORDS_ACTIVE then VAZ.CreerSwords() else for _, s in pairs(VAZ.swords) do s:Destroy() end VAZ.swords = {} end end })
+ui:AddModule("sword", "Armes 1-hit", { name = "zizi Tranchant", desc = "Mesh Gigas 432834997", toggle = true, default = true, callback = function() if not p.Backpack:FindFirstChild("zizi Tranchant") then VAZ.CreerArmeAvecMesh("zizi Tranchant", "432834997", 500) end end })
+ui:AddModule("sword", "Armes 1-hit", { name = "Micha Minivichi", desc = "Mesh Gigas", toggle = true, default = true, callback = function() if not p.Backpack:FindFirstChild("Micha Minivichi") then VAZ.CreerArmeAvecMesh("Micha Minivichi", "432834997", 600) end end })
+ui:AddModule("sword", "Armes 1-hit", { name = "Loucybel_Facher ★", desc = "Mesh Gigas", toggle = true, default = true, callback = function() if not p.Backpack:FindFirstChild("Loucybel_Facher") then VAZ.CreerArmeAvecMesh("Loucybel_Facher", "432834997", 550) end end })
+ui:AddModule("sword", "Armes 1-hit", { name = "istadyxx26 ★", desc = "Mesh Gigas", toggle = true, default = true, callback = function() if not p.Backpack:FindFirstChild("istadyxx26") then VAZ.CreerArmeAvecMesh("istadyxx26", "432834997", 600) end end })
+ui:AddModule("sword", "Armes 1-hit", { name = "Épées orbitales", desc = "Mesh 13186744598", toggle = true, default = true, callback = function() VAZ.SWORDS_ACTIVE = not VAZ.SWORDS_ACTIVE if VAZ.SWORDS_ACTIVE then VAZ.CreerSwords() else for _, s in pairs(VAZ.swords) do s:Destroy() end VAZ.swords = {} end end })
 
 -- ============================================================
 -- MOUVEMENT
@@ -62,11 +62,11 @@ ui:AddSlider("move", "Déplacements", "Vitesse de marche", 16, 300, 16, function
     VAZ.WALK_SPEED = v
 end)
 ui:AddSlider("move", "Déplacements", "Vitesse de vol", 50, 500, 50, function(v) VAZ.FLY_SPEED = v end)
-ui:AddTextBox("move", "Déplacements", "Entrer la vitesse de marche", "16", "16", function(v)
+ui:AddTextBox("move", "Déplacements", "Vitesse de marche (saisie)", "16", "16", function(v)
     local char = p.Character
     if char and char:FindFirstChild("Humanoid") then char.Humanoid.WalkSpeed = v end
 end)
-ui:AddTextBox("move", "Déplacements", "Entrer la vitesse de saut", "50", "50", function(v)
+ui:AddTextBox("move", "Déplacements", "Vitesse de saut (saisie)", "50", "50", function(v)
     local char = p.Character
     if char and char:FindFirstChild("Humanoid") then char.Humanoid.JumpPower = v end
 end)
@@ -75,7 +75,16 @@ end)
 -- COMBAT
 -- ============================================================
 ui:AddTab("crosshair", "Attaque")
-ui:AddModule("crosshair", "Attaque", { name = "Tuer tous", desc = "Élimine tout le monde", callback = function() for _, v in pairs(Players:GetPlayers()) do if v ~= p and v.Character then local h = v.Character:FindFirstChild("Humanoid") if h then h.Health = 0 local e = Instance.new("Explosion") e.Position = v.Character.HumanoidRootPart.Position e.BlastRadius = 10 e.BlastPressure = 0 e.Parent = workspace end end end VAZ.ChangerNom() ui:Notify("Tous éliminés") end })
+ui:AddModule("crosshair", "Attaque", { name = "Tuer tous", desc = "Élimine tout le monde", callback = function()
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= p and v.Character then
+            local h = v.Character:FindFirstChild("Humanoid")
+            if h then h.Health = 0 end
+        end
+    end
+    VAZ.ChangerNom()
+    ui:Notify("Tous éliminés")
+end })
 ui:AddModule("crosshair", "Attaque", { name = "Aimbot", desc = "Exunys V3", toggle = true, callback = function() VAZ.ToggleAimbot() end })
 ui:AddModule("crosshair", "Attaque", { name = "Wallhack / ESP", desc = "Voir à travers les murs", toggle = true, callback = function() VAZ.WALLHACK_ACTIVE = not VAZ.WALLHACK_ACTIVE VAZ.UpdateWallhack() end })
 ui:AddModule("crosshair", "Attaque", { name = "Clone (corrigé)", desc = "Clone qui te suit et attaque", toggle = true, callback = function() VAZ.ToggleClone() end })
@@ -97,7 +106,7 @@ ui:AddModule("crosshair", "Attaque", { name = "Unfreeze All", desc = "Dégeler t
     end
     ui:Notify("Tous dégelés")
 end })
-ui:AddModule("crosshair", "Attaque", { name = "Ragdoll All", desc = "Mettre en ragdoll tous les joueurs", callback = function()
+ui:AddModule("crosshair", "Attaque", { name = "Ragdoll All", desc = "Ragdoll tous les joueurs", callback = function()
     for _, v in pairs(Players:GetPlayers()) do
         if v ~= p and v.Character then
             local hum = v.Character:FindFirstChild("Humanoid")
@@ -120,12 +129,17 @@ ui:AddSlider("divers", "Divers", "Gravité", 0, 500, workspace.Gravity, function
     workspace.Gravity = v
     VAZ.GRAVITY = v
 end)
-ui:AddTextBox("divers", "Divers", "Entrer la gravité", "196.2", "196.2", function(v) workspace.Gravity = v end)
+ui:AddTextBox("divers", "Divers", "Gravité (saisie)", "196.2", "196.2", function(v) workspace.Gravity = v end)
 
 -- ============================================================
--- EFFETS
+-- EFFETS (c00lgui)
 -- ============================================================
 if VAZ.BuildEffectsTab then VAZ.BuildEffectsTab(ui) end
+
+-- ============================================================
+-- SIN DRAGON (part8)
+-- ============================================================
+if VAZ.BuildSinDragonTab then VAZ.BuildSinDragonTab(ui) end
 
 -- ============================================================
 -- PARAMÈTRES
@@ -205,5 +219,5 @@ uis.InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.T then VAZ.Teleporter() end
 end)
 
-print("✅ Partie 4/4 chargée - Modules + Paramètres + Admin + TextBox")
+print("✅ Partie 4/4 chargée - Modules + Paramètres + Admin + Sin Dragon")
 print("✅ Vaztoodix ™ v6 chargé avec succès !")
