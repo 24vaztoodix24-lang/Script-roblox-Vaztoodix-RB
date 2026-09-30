@@ -1,38 +1,45 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Aperçu Vaztoodix UI v5</title>
+<title>Aperçu Vaztoodix UI v10</title>
 <style>
+  * { box-sizing: border-box; }
   body { background: #0a0a15; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-  .window { width: 700px; height: 480px; background: linear-gradient(135deg, #14102a, #231440, #0f0a1e); border-radius: 20px; border: 1.5px solid #8c50ff; position: relative; overflow: hidden; }
-  .topbar { height: 46px; background: rgba(15,10,30,0.6); border-radius: 20px 20px 0 0; display: flex; align-items: center; padding: 0 10px; }
+  .window { width: 720px; height: 500px; background: linear-gradient(135deg, #230a19, #3c0f28, #0f050f); border-radius: 20px; border: 1.5px solid #b41e50; position: relative; overflow: hidden; }
+  .topbar { height: 46px; background: rgba(15,5,15,0.6); border-radius: 20px 20px 0 0; display: flex; align-items: center; padding: 0 10px; }
   .logo { width: 38px; height: 38px; background: radial-gradient(circle, #ff6600, #8b0000); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 9px; }
   .clock { flex: 1; text-align: center; color: white; font-weight: bold; font-size: 13px; }
   .counter { color: #50dc78; font-size: 11px; font-weight: bold; }
-  .btn { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-left: 6px; cursor: pointer; }
-  .btn-min { background: rgba(80,80,120,0.6); }
-  .btn-close { background: rgba(255,80,100,0.5); }
-  .body { display: flex; height: 398px; }
-  .sidebar { width: 48px; background: rgba(15,10,30,0.5); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 3px; }
-  .sidebar-btn { width: 32px; height: 32px; background: rgba(45,35,75,0.5); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #c8c8dc; font-size: 14px; cursor: pointer; }
-  .sidebar-btn:hover, .sidebar-btn.active { background: rgba(140,80,255,0.8); color: white; }
-  .content-wrapper { flex: 1; overflow-x: auto; overflow-y: hidden; padding: 5px; scrollbar-width: thin; }
-  .content-wrapper::-webkit-scrollbar { height: 6px; }
-  .content-wrapper::-webkit-scrollbar-thumb { background: #8c50ff; border-radius: 3px; }
-  .content { display: grid; grid-template-rows: repeat(3, 68px); grid-auto-flow: column; grid-auto-columns: 175px; gap: 8px; height: 100%; }
-  .card { background: rgba(45,35,75,0.85); border-radius: 10px; border: 1px solid rgba(100,70,180,0.6); padding: 6px 8px; position: relative; box-sizing: border-box; height: 68px; }
-  .card-title { color: white; font-weight: bold; font-size: 12px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .card-desc { color: #c8c8dc; font-size: 9px; margin: 2px 0 0 0; overflow: hidden; }
-  .dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: #505064; }
+  .btn { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-left: 6px; cursor: pointer; font-size: 14px; }
+  .btn-min { background: rgba(120,40,60,0.7); }
+  .btn-close { background: rgba(255,80,100,0.6); }
+  .body { display: flex; height: 414px; }
+  .sidebar { width: 48px; background: rgba(15,5,15,0.5); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 3px; }
+  .sidebar-btn { width: 34px; height: 34px; background: rgba(60,20,45,0.6); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; transition: 0.15s; }
+  .sidebar-btn:hover { background: rgba(180,30,80,0.9); }
+  .sidebar-btn.active { background: rgba(180,30,80,0.9); }
+  .content-area { flex: 1; padding: 5px 8px; position: relative; }
+  .cat-header { margin-bottom: 4px; }
+  .cat-title { color: white; font-weight: bold; font-size: 14px; }
+  .cat-desc { color: #dcc8d2; font-size: 10px; margin-top: 2px; }
+  .search-bar { width: 100%; height: 22px; background: rgba(30,10,25,0.9); border: 1px solid rgba(160,50,90,0.6); border-radius: 6px; padding: 0 8px; color: white; font-size: 10px; outline: none; margin-top: 6px; }
+  .search-bar::placeholder { color: #96828c; }
+  .content-wrapper { margin-top: 8px; height: 300px; overflow-y: auto; padding-right: 4px; }
+  .content-wrapper::-webkit-scrollbar { width: 6px; }
+  .content-wrapper::-webkit-scrollbar-thumb { background: #b41e50; border-radius: 3px; }
+  .content { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; align-content: start; }
+  .card { height: 56px; background: rgba(60,20,45,0.85); border-radius: 8px; border: 1px solid rgba(160,50,90,0.6); padding: 4px 6px; position: relative; cursor: pointer; }
+  .card.green { border: 3px solid #00ff00; }
+  .card-title { color: white; font-weight: bold; font-size: 10px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-desc { color: #dcc8d2; font-size: 8px; margin: 2px 0 0 0; overflow: hidden; }
+  .card-tag { color: #ff9666; font-size: 8px; margin: 1px 0 0 0; }
+  .dot { position: absolute; top: 4px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: #645064; }
   .dot.on { background: #50dc78; }
-  .slider { position: absolute; bottom: 6px; left: 8px; right: 8px; height: 6px; background: rgba(15,10,30,0.8); border-radius: 3px; }
-  .slider-fill { height: 100%; background: #8c50ff; border-radius: 3px; width: 50%; }
-  .slider-knob { position: absolute; top: -3px; width: 12px; height: 12px; background: white; border-radius: 50%; left: 50%; transform: translateX(-50%); }
-  .bottom { position: absolute; bottom: 14px; left: 53px; right: 0; height: 20px; display: flex; align-items: center; justify-content: center; gap: 4px; }
-  .tab { background: rgba(45,35,75,0.6); color: white; padding: 2px 10px; border-radius: 5px; font-size: 9px; font-weight: bold; cursor: pointer; }
-  .tab.active { background: rgba(140,80,255,0.8); }
-  .status { position: absolute; bottom: 0; left: 53px; right: 0; height: 14px; background: rgba(15,10,30,0.7); color: #c8c8dc; font-size: 9px; display: flex; align-items: center; padding-left: 6px; }
+  .bottom { position: absolute; bottom: 23px; left: 53px; right: 0; height: 20px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .tab { background: rgba(60,20,45,0.6); color: white; padding: 2px 10px; border-radius: 5px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .tab.active { background: rgba(180,30,80,0.9); }
+  .status { position: absolute; bottom: 0; left: 53px; right: 0; height: 14px; background: rgba(15,5,15,0.7); color: #dcc8d2; font-size: 9px; display: flex; align-items: center; padding-left: 6px; }
 </style>
 </head>
 <body>
@@ -48,14 +55,22 @@
     <div class="sidebar">
       <div class="sidebar-btn active" onclick="showCat('home', this)">🏠</div>
       <div class="sidebar-btn" onclick="showCat('sword', this)">⚔️</div>
-      <div class="sidebar-btn" onclick="showCat('move', this)">✥</div>
+      <div class="sidebar-btn" onclick="showCat('move', this)">🏃</div>
       <div class="sidebar-btn" onclick="showCat('crosshair', this)">🎯</div>
-      <div class="sidebar-btn" onclick="showCat('settings', this)">⚙️</div>
+      <div class="sidebar-btn" onclick="showCat('divers', this)">🎮</div>
       <div class="sidebar-btn" onclick="showCat('sparkles', this)">✨</div>
+      <div class="sidebar-btn" onclick="showCat('settings', this)">⚙️</div>
       <div class="sidebar-btn" onclick="showCat('info', this)">ℹ️</div>
     </div>
-    <div class="content-wrapper">
-      <div class="content" id="content"></div>
+    <div class="content-area">
+      <div class="cat-header">
+        <div class="cat-title" id="catTitle">🏠 Accueil</div>
+        <div class="cat-desc" id="catDesc">Bienvenue sur Vaztoodix ™</div>
+        <input class="search-bar" id="searchBox" placeholder="🔍 Rechercher dans toutes les catégories..." oninput="renderModules()">
+      </div>
+      <div class="content-wrapper">
+        <div class="content" id="content"></div>
+      </div>
     </div>
   </div>
   <div class="bottom" id="tabs"></div>
@@ -63,80 +78,84 @@
 </div>
 <script>
   const categories = {
-    home: { tabs: ["Bienvenue"], modules: { "Bienvenue": [
-      ["Vaztoodix ™ Ultimate","Interface v5",true],
-      ["Aide","T = téléport | Fly = WASD + Shift",false]
+    home: { title: "🏠 Accueil", desc: "Bienvenue sur Vaztoodix ™", tabs: { "Bienvenue": [
+      ["Vaztoodix ™ v10","Interface complète",true],
+      ["Aide","T = téléport | Fly = WASD",false]
     ] } },
-    sword: { tabs: ["Armes 1-hit"], modules: { "Armes 1-hit": [
-      ["zizi Tranchant","Uppercut Sword",true],
-      ["Micha Minivichi","Highlander Sword",true],
-      ["Loucybel_Facher ★","Golem Hammer",true],
-      ["istadyxx26 ★","Claymore + effets",true],
-      ["Épées orbitales","6 épées Roblox",true]
+    sword: { title: "⚔️ Armes", desc: "Armes 1-hit et épées", tabs: { "Armes 1-hit": [
+      ["zizi Tranchant","Mesh Gigas",true],
+      ["Micha Minivichi","Mesh Gigas",true],
+      ["Loucybel_Facher ★","Mesh Gigas",true],
+      ["istadyxx26 ★","Mesh Gigas",true],
+      ["Épées orbitales","Mesh 13186744598",true]
     ] } },
-    move: { tabs: ["Déplacements"], modules: { "Déplacements": [
+    move: { title: "🏃 Mouvement", desc: "Fly, Speed, Jump, Noclip", tabs: { "Déplacements": [
       ["Vol (Fly)","WASD + Espace + Shift",false],
       ["Speed Boost","Vitesse 50",false],
       ["Jump Boost","Saut 100",false],
       ["Téléport (T)","À la souris",true],
       ["Noclip","Traverser les murs",false],
-      ["Vitesse de marche","Slider",null, 16, 200, 16],
-      ["Vitesse de vol","Slider",null, 50, 300, 50]
+      ["Vitesse de marche","Slider",null,"slider"],
+      ["Vitesse de vol","Slider",null,"slider"]
     ] } },
-    crosshair: { tabs: ["Attaque", "Sin Dragon"], modules: {
+    crosshair: { title: "🎯 Combat / PvP", desc: "Aimbot, ESP, Kill All", tabs: {
       "Attaque": [
         ["Tuer tous","Élimine tout le monde",false],
         ["Aimbot","Exunys V3",false],
-        ["Wallhack / ESP","Travers les murs",false],
-        ["Clone","Clone qui attaque",false]
+        ["Wallhack / ESP","Voir à travers les murs",false],
+        ["Clone","Clone qui suit et attaque",false],
+        ["Freeze All","Geler tout le monde",false],
+        ["Unfreeze All","Dégeler tout le monde",false],
+        ["Ragdoll All","Ragdoll tout le monde",false]
       ],
       "Sin Dragon": [
-        ["Donner les armes","Touches G / C / F",false],
+        ["Donner les armes Sin Dragon","Touche G, C ou F",false],
         ["Attaque 1 (G)","Clic gauche",false],
         ["Attaque 2 (C)","Clic gauche",false],
         ["Attaque 3 (F)","Clic gauche",false]
       ]
     } },
-    settings: { tabs: ["Divers", "Paramètres"], modules: {
-      "Divers": [
-        ["Godmode","Santé infinie",false],
-        ["Invisibilité","Transparent",false],
-        ["Auto-click","Clic auto",false],
-        ["Anti-AFK","Éviter le kick",false],
-        ["Particules","Halo coloré",false]
-      ],
-      "Paramètres": [
-        ["Notifications","Activer/désactiver",true],
-        ["Taille : Moyenne","Petite/Moyenne/Grande",false],
-        ["Thème : Violet","Violet/Bleu/Rouge",false],
-        ["Sauvegarder position","Mémoriser la position",false],
-        ["Recentrer l'interface","Remettre au centre",false]
-      ]
-    } },
-    sparkles: { tabs: ["Effets"], modules: { "Effets": [
+    divers: { title: "🎮 Divers", desc: "Godmode, Invisible, Gravité", tabs: { "Divers": [
+      ["Godmode","Santé infinie",false],
+      ["Invisibilité","Transparent",false],
+      ["Auto-click","Clic auto",false],
+      ["Anti-AFK","Éviter le kick",false],
+      ["Particules","Halo coloré",false],
+      ["Gravité","Slider",null,"slider"]
+    ] } },
+    sparkles: { title: "✨ Effets", desc: "20 effets c00lgui", tabs: { "Effets": [
       ["Décal","Texture murs",false],
       ["Skybox c00lkidd","Ciel c00lkidd",false],
-      ["Skybox c00lkidd sky","Version 158118263",false],
-      ["Décal c00lkidd","Texture 158118263",false],
-      ["Particules c00lkidd","Sur la tête",false],
+      ["Skybox c00lkidd sky","158118263",false],
+      ["Décal c00lkidd","158118263",false],
+      ["Particules c00lkidd","Tête",false],
       ["Son goofy ahh","Joue le son",false],
       ["Spooky Scary","Joue spooky",false],
       ["Play Theme","Musique thème",false],
       ["Particules Hacker","Hacker",false],
-      ["Hint","Hint en haut",false],
-      ["Hint 2","Hint 2",false],
+      ["Hint","En haut",false],
+      ["Hint 2","En haut",false],
       ["Message","Message 1",false],
       ["Message 2","Message 2",false],
       ["Kill All","Tue tous",false],
-      ["Toadroast","Effet chaotique",false],
-      ["Nachos","Effet chaotique",false],
-      ["666","Rouge + 666",false],
-      ["Shedletsky","Skybox + particules",false],
-      ["Anonymous Sky","Ciel Anon",false],
-      ["Fly Script c00l","Version c00lgui",false]
+      ["Toadroast","Chaotique",false],
+      ["Nachos","Chaotique",false],
+      ["666","Rouge",false],
+      ["Shedletsky","Skybox",false],
+      ["Anonymous Sky","Ciel",false],
+      ["Fly Script c00l","Fly",false]
     ] } },
-    info: { tabs: ["À propos"], modules: { "À propos": [
-      ["Vaztoodix ™ v5","Antonio, Micha, Ismaël, DeepSeek",false]
+    settings: { title: "⚙️ Paramètres", desc: "Taille, Fond, Notifications", tabs: { "Paramètres": [
+      ["Notifications ON/OFF","Activer les pop-ups",true],
+      ["Taille : Petite","Réduire (75%)",false],
+      ["Taille : Moyenne","Taille normale",false],
+      ["Taille : Grande","Agrandir (125%)",false],
+      ["Fond : Dégradé rouge","Style 1",false],
+      ["Fond : Transparent","Style 2",false],
+      ["Recentrer l'interface","Remettre au centre",false]
+    ] } },
+    info: { title: "ℹ️ Crédits", desc: "Antonio, Micha, Ismaël, DeepSeek", tabs: { "À propos": [
+      ["Vaztoodix ™ v10","Antonio, Micha, Ismaël, DeepSeek",false]
     ] } }
   };
 
@@ -145,9 +164,11 @@
 
   function showCat(cat, el) {
     currentCat = cat;
-    currentTab = categories[cat].tabs[0];
+    currentTab = Object.keys(categories[cat].tabs)[0];
     document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
+    document.getElementById('catTitle').textContent = categories[cat].title;
+    document.getElementById('catDesc').textContent = categories[cat].desc;
     renderTabs();
     renderModules();
   }
@@ -155,11 +176,17 @@
   function renderTabs() {
     const tabsDiv = document.getElementById('tabs');
     tabsDiv.innerHTML = '';
-    categories[currentCat].tabs.forEach(tab => {
+    Object.keys(categories[currentCat].tabs).forEach(tab => {
       const d = document.createElement('div');
       d.className = 'tab' + (tab === currentTab ? ' active' : '');
       d.textContent = tab;
-      d.onclick = () => { currentTab = tab; renderTabs(); renderModules(); };
+      d.onclick = () => {
+        currentTab = tab;
+        document.getElementById('catTitle').textContent = categories[currentCat].title;
+        document.getElementById('catDesc').textContent = categories[currentCat].desc;
+        renderTabs();
+        renderModules();
+      };
       tabsDiv.appendChild(d);
     });
   }
@@ -167,24 +194,57 @@
   function renderModules() {
     const content = document.getElementById('content');
     content.innerHTML = '';
-    const mods = categories[currentCat].modules[currentTab] || [];
-    mods.forEach(item => {
-      const [name, desc, on, min, max, def] = item;
-      const isSlider = (min !== undefined && max !== undefined);
+    const search = document.getElementById('searchBox').value.toLowerCase();
+
+    let modules = [];
+    let isSearching = search !== '';
+
+    if (isSearching) {
+      document.getElementById('catTitle').textContent = "🔍 Résultats de recherche";
+      document.getElementById('catDesc').textContent = "Recherche dans toutes les catégories";
+      for (const catName in categories) {
+        for (const tabName in categories[catName].tabs) {
+          categories[catName].tabs[tabName].forEach(m => {
+            const name = m[0].toLowerCase();
+            const desc = (m[1] || "").toLowerCase();
+            if (name.includes(search) || desc.includes(search)) {
+              modules.push({ name: m[0], desc: m[1], on: m[2], type: m[3], cat: catName, tab: tabName });
+            }
+          });
+        }
+      }
+    } else {
+      const tabData = categories[currentCat].tabs[currentTab] || [];
+      tabData.forEach(m => {
+        modules.push({ name: m[0], desc: m[1], on: m[2], type: m[3], cat: currentCat, tab: currentTab });
+      });
+    }
+
+    modules.forEach(m => {
       const card = document.createElement('div');
-      card.className = 'card';
-      if (isSlider) {
-        const ratio = (def - min) / (max - min);
+      const isGreen = (m.cat === 'sparkles') || (m.tab === 'Sin Dragon');
+      card.className = 'card' + (isGreen ? ' green' : '');
+
+      let titleText = m.name;
+      let tagText = '';
+      if (isSearching) {
+        tagText = `<p class="card-tag">[${m.cat}]</p>`;
+      }
+
+      if (m.type === 'slider') {
         card.innerHTML = `
-          <p class="card-title">${name}</p>
-          <p class="card-desc">Valeur : ${def}</p>
-          <div class="slider"><div class="slider-fill" style="width: ${ratio*100}%"></div><div class="slider-knob" style="left: ${ratio*100}%"></div></div>
+          <p class="card-title">${titleText}</p>
+          ${tagText}
+          <div style="position:absolute;bottom:6px;left:6px;right:6px;height:5px;background:rgba(15,5,15,0.8);border-radius:3px;">
+            <div style="width:50%;height:100%;background:#b41e50;border-radius:3px;"></div>
+          </div>
         `;
       } else {
         card.innerHTML = `
-          <p class="card-title">${name}</p>
-          <p class="card-desc">${desc}</p>
-          <div class="dot${on?' on':''}"></div>
+          <p class="card-title">${titleText}</p>
+          <p class="card-desc">${m.desc || ''}</p>
+          ${tagText}
+          <div class="dot${m.on ? ' on' : ''}"></div>
         `;
         card.onclick = () => {
           const dot = card.querySelector('.dot');
