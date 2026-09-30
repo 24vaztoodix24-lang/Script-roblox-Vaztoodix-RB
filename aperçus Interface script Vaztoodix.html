@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Aperçu Vaztoodix UI v5</title>
+<style>
+  body { background: #0a0a15; font-family: 'Segoe UI', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+  .window { width: 700px; height: 480px; background: linear-gradient(135deg, #14102a, #231440, #0f0a1e); border-radius: 20px; border: 1.5px solid #8c50ff; position: relative; overflow: hidden; }
+  .topbar { height: 46px; background: rgba(15,10,30,0.6); border-radius: 20px 20px 0 0; display: flex; align-items: center; padding: 0 10px; }
+  .logo { width: 38px; height: 38px; background: radial-gradient(circle, #ff6600, #8b0000); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 9px; }
+  .clock { flex: 1; text-align: center; color: white; font-weight: bold; font-size: 13px; }
+  .counter { color: #50dc78; font-size: 11px; font-weight: bold; }
+  .btn { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-left: 6px; cursor: pointer; }
+  .btn-min { background: rgba(80,80,120,0.6); }
+  .btn-close { background: rgba(255,80,100,0.5); }
+  .body { display: flex; height: 398px; }
+  .sidebar { width: 48px; background: rgba(15,10,30,0.5); display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 3px; }
+  .sidebar-btn { width: 32px; height: 32px; background: rgba(45,35,75,0.5); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #c8c8dc; font-size: 14px; cursor: pointer; }
+  .sidebar-btn:hover, .sidebar-btn.active { background: rgba(140,80,255,0.8); color: white; }
+  .content-wrapper { flex: 1; overflow-x: auto; overflow-y: hidden; padding: 5px; scrollbar-width: thin; }
+  .content-wrapper::-webkit-scrollbar { height: 6px; }
+  .content-wrapper::-webkit-scrollbar-thumb { background: #8c50ff; border-radius: 3px; }
+  .content { display: grid; grid-template-rows: repeat(3, 68px); grid-auto-flow: column; grid-auto-columns: 175px; gap: 8px; height: 100%; }
+  .card { background: rgba(45,35,75,0.85); border-radius: 10px; border: 1px solid rgba(100,70,180,0.6); padding: 6px 8px; position: relative; box-sizing: border-box; height: 68px; }
+  .card-title { color: white; font-weight: bold; font-size: 12px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card-desc { color: #c8c8dc; font-size: 9px; margin: 2px 0 0 0; overflow: hidden; }
+  .dot { position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%; background: #505064; }
+  .dot.on { background: #50dc78; }
+  .slider { position: absolute; bottom: 6px; left: 8px; right: 8px; height: 6px; background: rgba(15,10,30,0.8); border-radius: 3px; }
+  .slider-fill { height: 100%; background: #8c50ff; border-radius: 3px; width: 50%; }
+  .slider-knob { position: absolute; top: -3px; width: 12px; height: 12px; background: white; border-radius: 50%; left: 50%; transform: translateX(-50%); }
+  .bottom { position: absolute; bottom: 14px; left: 53px; right: 0; height: 20px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .tab { background: rgba(45,35,75,0.6); color: white; padding: 2px 10px; border-radius: 5px; font-size: 9px; font-weight: bold; cursor: pointer; }
+  .tab.active { background: rgba(140,80,255,0.8); }
+  .status { position: absolute; bottom: 0; left: 53px; right: 0; height: 14px; background: rgba(15,10,30,0.7); color: #c8c8dc; font-size: 9px; display: flex; align-items: center; padding-left: 6px; }
+</style>
+</head>
+<body>
+<div class="window">
+  <div class="topbar">
+    <div class="logo">VAZ</div>
+    <div class="clock" id="clock">--:--:--</div>
+    <div class="counter" id="counter">0 actif</div>
+    <div class="btn btn-min">—</div>
+    <div class="btn btn-close">✕</div>
+  </div>
+  <div class="body">
+    <div class="sidebar">
+      <div class="sidebar-btn active" onclick="showCat('home', this)">🏠</div>
+      <div class="sidebar-btn" onclick="showCat('sword', this)">⚔️</div>
+      <div class="sidebar-btn" onclick="showCat('move', this)">✥</div>
+      <div class="sidebar-btn" onclick="showCat('crosshair', this)">🎯</div>
+      <div class="sidebar-btn" onclick="showCat('settings', this)">⚙️</div>
+      <div class="sidebar-btn" onclick="showCat('sparkles', this)">✨</div>
+      <div class="sidebar-btn" onclick="showCat('info', this)">ℹ️</div>
+    </div>
+    <div class="content-wrapper">
+      <div class="content" id="content"></div>
+    </div>
+  </div>
+  <div class="bottom" id="tabs"></div>
+  <div class="status" id="status">Prêt</div>
+</div>
+<script>
+  const categories = {
+    home: { tabs: ["Bienvenue"], modules: { "Bienvenue": [
+      ["Vaztoodix ™ Ultimate","Interface v5",true],
+      ["Aide","T = téléport | Fly = WASD + Shift",false]
+    ] } },
+    sword: { tabs: ["Armes 1-hit"], modules: { "Armes 1-hit": [
+      ["zizi Tranchant","Uppercut Sword",true],
+      ["Micha Minivichi","Highlander Sword",true],
+      ["Loucybel_Facher ★","Golem Hammer",true],
+      ["istadyxx26 ★","Claymore + effets",true],
+      ["Épées orbitales","6 épées Roblox",true]
+    ] } },
+    move: { tabs: ["Déplacements"], modules: { "Déplacements": [
+      ["Vol (Fly)","WASD + Espace + Shift",false],
+      ["Speed Boost","Vitesse 50",false],
+      ["Jump Boost","Saut 100",false],
+      ["Téléport (T)","À la souris",true],
+      ["Noclip","Traverser les murs",false],
+      ["Vitesse de marche","Slider",null, 16, 200, 16],
+      ["Vitesse de vol","Slider",null, 50, 300, 50]
+    ] } },
+    crosshair: { tabs: ["Attaque", "Sin Dragon"], modules: {
+      "Attaque": [
+        ["Tuer tous","Élimine tout le monde",false],
+        ["Aimbot","Exunys V3",false],
+        ["Wallhack / ESP","Travers les murs",false],
+        ["Clone","Clone qui attaque",false]
+      ],
+      "Sin Dragon": [
+        ["Donner les armes","Touches G / C / F",false],
+        ["Attaque 1 (G)","Clic gauche",false],
+        ["Attaque 2 (C)","Clic gauche",false],
+        ["Attaque 3 (F)","Clic gauche",false]
+      ]
+    } },
+    settings: { tabs: ["Divers", "Paramètres"], modules: {
+      "Divers": [
+        ["Godmode","Santé infinie",false],
+        ["Invisibilité","Transparent",false],
+        ["Auto-click","Clic auto",false],
+        ["Anti-AFK","Éviter le kick",false],
+        ["Particules","Halo coloré",false]
+      ],
+      "Paramètres": [
+        ["Notifications","Activer/désactiver",true],
+        ["Taille : Moyenne","Petite/Moyenne/Grande",false],
+        ["Thème : Violet","Violet/Bleu/Rouge",false],
+        ["Sauvegarder position","Mémoriser la position",false],
+        ["Recentrer l'interface","Remettre au centre",false]
+      ]
+    } },
+    sparkles: { tabs: ["Effets"], modules: { "Effets": [
+      ["Décal","Texture murs",false],
+      ["Skybox c00lkidd","Ciel c00lkidd",false],
+      ["Skybox c00lkidd sky","Version 158118263",false],
+      ["Décal c00lkidd","Texture 158118263",false],
+      ["Particules c00lkidd","Sur la tête",false],
+      ["Son goofy ahh","Joue le son",false],
+      ["Spooky Scary","Joue spooky",false],
+      ["Play Theme","Musique thème",false],
+      ["Particules Hacker","Hacker",false],
+      ["Hint","Hint en haut",false],
+      ["Hint 2","Hint 2",false],
+      ["Message","Message 1",false],
+      ["Message 2","Message 2",false],
+      ["Kill All","Tue tous",false],
+      ["Toadroast","Effet chaotique",false],
+      ["Nachos","Effet chaotique",false],
+      ["666","Rouge + 666",false],
+      ["Shedletsky","Skybox + particules",false],
+      ["Anonymous Sky","Ciel Anon",false],
+      ["Fly Script c00l","Version c00lgui",false]
+    ] } },
+    info: { tabs: ["À propos"], modules: { "À propos": [
+      ["Vaztoodix ™ v5","Antonio, Micha, Ismaël, DeepSeek",false]
+    ] } }
+  };
+
+  let currentCat = "home";
+  let currentTab = "Bienvenue";
+
+  function showCat(cat, el) {
+    currentCat = cat;
+    currentTab = categories[cat].tabs[0];
+    document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderTabs();
+    renderModules();
+  }
+
+  function renderTabs() {
+    const tabsDiv = document.getElementById('tabs');
+    tabsDiv.innerHTML = '';
+    categories[currentCat].tabs.forEach(tab => {
+      const d = document.createElement('div');
+      d.className = 'tab' + (tab === currentTab ? ' active' : '');
+      d.textContent = tab;
+      d.onclick = () => { currentTab = tab; renderTabs(); renderModules(); };
+      tabsDiv.appendChild(d);
+    });
+  }
+
+  function renderModules() {
+    const content = document.getElementById('content');
+    content.innerHTML = '';
+    const mods = categories[currentCat].modules[currentTab] || [];
+    mods.forEach(item => {
+      const [name, desc, on, min, max, def] = item;
+      const isSlider = (min !== undefined && max !== undefined);
+      const card = document.createElement('div');
+      card.className = 'card';
+      if (isSlider) {
+        const ratio = (def - min) / (max - min);
+        card.innerHTML = `
+          <p class="card-title">${name}</p>
+          <p class="card-desc">Valeur : ${def}</p>
+          <div class="slider"><div class="slider-fill" style="width: ${ratio*100}%"></div><div class="slider-knob" style="left: ${ratio*100}%"></div></div>
+        `;
+      } else {
+        card.innerHTML = `
+          <p class="card-title">${name}</p>
+          <p class="card-desc">${desc}</p>
+          <div class="dot${on?' on':''}"></div>
+        `;
+        card.onclick = () => {
+          const dot = card.querySelector('.dot');
+          if (dot) { dot.classList.toggle('on'); updateCounter(); }
+        };
+      }
+      content.appendChild(card);
+    });
+    updateCounter();
+  }
+
+  function updateCounter() {
+    const active = document.querySelectorAll('.dot.on').length;
+    document.getElementById('counter').textContent = active + ' actif';
+  }
+
+  setInterval(() => {
+    const d = new Date();
+    document.getElementById('clock').textContent = d.toLocaleTimeString('fr-FR');
+  }, 1000);
+
+  renderTabs();
+  renderModules();
+</script>
+</body>
+</html>
