@@ -203,6 +203,9 @@ function VAZ.BuildSettingsTab(ui)
 end
 VAZ.BuildSettingsTab(ui)
 
+-- RSPY / Dex
+if VAZ.BuildRSPYTab then VAZ.BuildRSPYTab(ui) end
+
 -- ============================================================
 -- CRÉDITS
 -- ============================================================
