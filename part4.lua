@@ -206,6 +206,9 @@ VAZ.BuildSettingsTab(ui)
 -- RSPY / Dex
 if VAZ.BuildRSPYTab then VAZ.BuildRSPYTab(ui) end
 
+-- Product Faker V2
+if VAZ.BuildFakerTab then VAZ.BuildFakerTab(ui) end
+
 -- ============================================================
 -- CRÉDITS
 -- ============================================================
