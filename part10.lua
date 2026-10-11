@@ -1507,20 +1507,19 @@ end
 
 setTab(1, true)
 env.__ProductFaker = UI
-open()
-scanProducts()
-loadSupported()
+-- NE PAS OUVRIR AUTOMATIQUEMENT
+-- L'utilisateur doit cliquer sur le bouton dans l'interface Vaztoodix
 
 -- Intégration Vaztoodix : bouton dans la catégorie RSPY
 function VAZ.BuildFakerTab(ui)
     ui:AddModule("rspy", "Explorer", {
         name = "Product Faker V2",
-        desc = "Ouvre le Product Faker (Delta uniquement)",
+        desc = "Clique pour ouvrir le Product Faker",
         callback = function()
             if UI and UI.Toggle then UI.Toggle() end
         end
     })
 end
 
-if VAZ.NotifyUI then VAZ.NotifyUI("Product Faker V2 chargé") end
-print("✅ Partie 10/10 chargée - Product Faker V2 (Delta)")
+if VAZ.NotifyUI then VAZ.NotifyUI("Product Faker V2 prêt (clique pour ouvrir)") end
+print("✅ Partie 10/10 chargée - Product Faker V2 (Delta, ouverture manuelle)")
