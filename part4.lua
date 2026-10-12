@@ -209,6 +209,15 @@ if VAZ.BuildRSPYTab then VAZ.BuildRSPYTab(ui) end
 -- Product Faker V2
 if VAZ.BuildFakerTab then VAZ.BuildFakerTab(ui) end
 
+-- Product Faker Simple
+if VAZ.BuildFakerSimpleTab then VAZ.BuildFakerSimpleTab(ui) end
+
+-- Sin Dragon Genesis + Admin Serveur
+if VAZ.BuildSinDragonNewTab then VAZ.BuildSinDragonNewTab(ui) end
+
+-- Descriptions
+if VAZ.BuildDescriptionsTab then VAZ.BuildDescriptionsTab(ui) end
+
 -- ============================================================
 -- CRÉDITS
 -- ============================================================
