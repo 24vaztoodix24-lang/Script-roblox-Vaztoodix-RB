@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Vaztoodix Studio v3</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-dark">
+
+<header class="app-header glass">
+  <div class="logo-area">
+    <div class="logo">VAZ</div>
+    <div class="app-title">
+      <h1>Vaztoodix Studio</h1>
+      <span class="version">v3.0</span>
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="icon-btn" id="btnClose" title="Fermer">✕</button>
+  </div>
+</header>
+
+<main class="app-main">
+
+  <aside class="sidebar glass">
+    <nav class="sidebar-nav">
+      <button class="nav-btn active" data-cat="home" title="Accueil">🏠</button>
+      <button class="nav-btn" data-cat="movement" title="Mouvement">🏃</button>
+      <button class="nav-btn" data-cat="themes" title="Thèmes">🎨</button>
+      <button class="nav-btn" data-cat="editor" title="Éditeur">📜</button>
+      <button class="nav-btn" data-cat="credits" title="Crédits">ℹ️</button>
+    </nav>
+  </aside>
+
+  <section class="center-panel">
+    <div class="panel-header glass">
+      <h2 id="catTitle">🏠 Accueil</h2>
+      <p id="catDesc">Bienvenue sur Vaztoodix Studio</p>
+      <input type="text" id="searchBox" class="search-input" placeholder="🔍 Rechercher...">
+    </div>
+    <div class="panel-content" id="content"></div>
+  </section>
+
+  <aside class="right-panel glass" id="rightPanel">
+    <div class="right-header">
+      <span>🎮 Scène 3D</span>
+      <button class="icon-btn small" id="btnCollapseRight" title="Réduire">◧</button>
+    </div>
+
+    <div class="scene-container" id="sceneContainer">
+      <canvas id="three-canvas"></canvas>
+    </div>
+
+    <div class="size-slider-container">
+      <span class="size-label">Taille :</span>
+      <input type="range" id="sceneSizeSlider" min="30" max="100" value="100">
+      <span class="size-value" id="sceneSizeValue">100%</span>
+    </div>
+
+    <div class="scene-adjustments glass">
+      <div class="adj-row">
+        <label>Zoom :</label>
+        <input type="range" id="zoomSlider" min="5" max="100" value="50">
+      </div>
+      <div class="adj-row">
+        <label>Rotation :</label>
+        <input type="range" id="rotationSlider" min="0" max="360" value="0">
+      </div>
+      <div class="adj-row">
+        <label>Vitesse bots :</label>
+        <input type="range" id="botSpeedSlider" min="0" max="100" value="30">
+      </div>
+    </div>
+
+    <div class="bot-controls glass">
+      <span>🤖 Bots :</span>
+      <input type="range" id="botSlider" min="0" max="30" value="5">
+      <span class="bot-count" id="botCount">5</span>
+    </div>
+
+    <div class="discord-widget">
+      <iframe src="https://discord.com/widget?id=1540985127012798504&theme=dark" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+    </div>
+  </aside>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="app.js"></script>
+<script src="app3d.js"></script>
+
+</body>
+</html>
